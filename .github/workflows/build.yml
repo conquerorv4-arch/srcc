@@ -1,4 +1,4 @@
-Name: Build iOS Tweak
+name: Build iOS Tweak
 
 on:
   push:
