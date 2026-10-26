@@ -2,13 +2,62 @@
 #include <dlfcn.h>
 #include <sys/stat.h>
 
-// Global dəyişənlər
 static UIWindow *overlayWindow = nil;
 static UITextField *keyTextField = nil;
 static NSTimer *authTimer = nil;
 static BOOL isAuthorized = NO;
 
-// Lisenziya yoxlama funksiyası
+// Forward declarations
+void verifyKey(NSString *inputKey);
+
+@interface LoginManager : NSObject <UITextFieldDelegate>
++ (instancetype)sharedInstance;
+- (void)loginTapped;
+- (void)exitTapped;
+- (void)doneTapped;
+@end
+
+@implementation LoginManager
++ (instancetype)sharedInstance {
+    static LoginManager *shared = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        shared = [[LoginManager alloc] init];
+    });
+    return shared;
+}
+
+- (void)loginTapped {
+    NSString *inputKey = keyTextField.text;
+    if (inputKey.length > 0) {
+        verifyKey(inputKey);
+    } else {
+        UIViewController *topVC = [UIApplication sharedApplication].delegate.window.rootViewController;
+        UIAlertController *errAlert = [UIAlertController alertControllerWithTitle:@"Hata" message:@"Anahtar boş olamaz!" preferredStyle:UIAlertControllerStyleAlert];
+        [topVC presentViewController:errAlert animated:YES completion:nil];
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            [errAlert dismissViewControllerAnimated:YES completion:nil];
+        });
+    }
+}
+
+- (void)exitTapped {
+    abort();
+}
+
+- (void)doneTapped {
+    [keyTextField resignFirstResponder];
+}
+
+- (BOOL)textFieldShouldReturn:(UITextField *)textField {
+    [textField resignFirstResponder];
+    if (textField.text.length > 0) {
+        verifyKey(textField.text);
+    }
+    return YES;
+}
+@end
+
 void verifyKey(NSString *inputKey) {
     if (isAuthorized) return;
 
@@ -33,9 +82,8 @@ void verifyKey(NSString *inputKey) {
                 [overlayWindow removeFromSuperview];
                 overlayWindow = nil;
                 
-                // Root view controller vasitəsilə alert göstəririk (keyWindow xətası olmasın deyə)
                 UIViewController *topVC = [UIApplication sharedApplication].delegate.window.rootViewController;
-                UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Uğurludur" message:@"Lisenziya təsdiqləndi! Oyun açılır." preferredStyle:UIAlertControllerStyleAlert];
+                UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Başarılı" message:@"Lisans onaylandı! Oyun açılıyor." preferredStyle:UIAlertControllerStyleAlert];
                 [topVC presentViewController:alert animated:YES completion:nil];
                 dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
                     [alert dismissViewControllerAnimated:YES completion:nil];
@@ -80,7 +128,8 @@ void showLoginMenu() {
         overlayWindow.rootViewController = vc;
         [overlayWindow makeKeyAndVisible];
 
-        UIView *panel = [[UIView alloc] initWithFrame:CGRectMake(30, 100, [UIScreen mainScreen].bounds.size.width - 60, 260)];
+        // Paneli ekranın üst kısmına konumlandırıyoruz ki klavye kapatmasın
+        UIView *panel = [[UIView alloc] initWithFrame:CGRectMake(30, 40, [UIScreen mainScreen].bounds.size.width - 60, 260)];
         panel.backgroundColor = [[UIColor blackColor] colorWithAlphaComponent:0.85];
         panel.layer.cornerRadius = 16;
         panel.layer.borderWidth = 1.5;
@@ -95,7 +144,7 @@ void showLoginMenu() {
         [panel addSubview:titleLabel];
 
         UILabel *subLabel = [[UILabel alloc] initWithFrame:CGRectMake(10, 50, panel.frame.size.width - 20, 20)];
-        subLabel.text = @"Lütfən lisenziya açarını daxil edin:";
+        subLabel.text = @"Lütfen lisans anahtarını girin:";
         subLabel.textColor = [UIColor whiteColor];
         subLabel.font = [UIFont systemFontOfSize:13];
         subLabel.textAlignment = NSTextAlignmentCenter;
@@ -106,7 +155,20 @@ void showLoginMenu() {
         keyTextField.textColor = [UIColor whiteColor];
         keyTextField.font = [UIFont systemFontOfSize:14];
         keyTextField.borderStyle = UITextBorderStyleRoundedRect;
-        keyTextField.placeholder = @"Açarı bura yazın...";
+        keyTextField.placeholder = @"Anahtarı buraya yazın...";
+        keyTextField.delegate = [LoginManager sharedInstance];
+        keyTextField.returnKeyType = UIReturnKeyDone;
+
+        // Klavyenin üstüne Kapat ve Giriş Et butonları ekliyoruz
+        UIToolbar *keyboardToolbar = [[UIToolbar alloc] initWithFrame:CGRectMake(0, 0, [UIScreen mainScreen].bounds.size.width, 44)];
+        keyboardToolbar.barStyle = UIBarStyleDefault;
+        UIBarButtonItem *flexSpace = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil];
+        UIBarButtonItem *doneBtn = [[UIBarButtonItem alloc] initWithTitle:@"Kapat" style:UIBarButtonItemStyleDone target:[LoginManager sharedInstance] action:@selector(doneTapped)];
+        UIBarButtonItem *submitBtn = [[UIBarButtonItem alloc] initWithTitle:@"Giriş Et" style:UIBarButtonItemStylePlain target:[LoginManager sharedInstance] action:@selector(loginTapped)];
+        keyboardToolbar.items = @[doneBtn, flexSpace, submitBtn];
+        [keyboardToolbar sizeToFit];
+        keyTextField.inputAccessoryView = keyboardToolbar;
+
         [panel addSubview:keyTextField];
 
         UIButton *loginBtn = [UIButton buttonWithType:UIButtonTypeSystem];
@@ -116,14 +178,14 @@ void showLoginMenu() {
         loginBtn.backgroundColor = [UIColor cyanColor];
         loginBtn.layer.cornerRadius = 8;
         loginBtn.titleLabel.font = [UIFont boldSystemFontOfSize:15];
-        [loginBtn addTarget:nil action:@selector(loginTapped) forControlEvents:UIControlEventTouchUpInside];
+        [loginBtn addTarget:[LoginManager sharedInstance] action:@selector(loginTapped) forControlEvents:UIControlEventTouchUpInside];
         [panel addSubview:loginBtn];
 
         UIButton *exitBtn = [UIButton buttonWithType:UIButtonTypeSystem];
         exitBtn.frame = CGRectMake(25, 185, panel.frame.size.width - 50, 35);
-        [exitBtn setTitle:@"Çıxış" forState:UIControlStateNormal];
+        [exitBtn setTitle:@"Çıkış" forState:UIControlStateNormal];
         [exitBtn setTitleColor:[UIColor redColor] forState:UIControlStateNormal];
-        [exitBtn addTarget:nil action:@selector(exitTapped) forControlEvents:UIControlEventTouchUpInside];
+        [exitBtn addTarget:[LoginManager sharedInstance] action:@selector(exitTapped) forControlEvents:UIControlEventTouchUpInside];
         [panel addSubview:exitBtn];
 
         authTimer = [NSTimer scheduledTimerWithTimeInterval:15.0 target:[NSBlockOperation blockOperationWithBlock:^{
@@ -131,31 +193,6 @@ void showLoginMenu() {
         }] selector:@selector(main) userInfo:nil repeats:NO];
     });
 }
-
-@interface LoginManager : NSObject
-+ (void)loginTapped;
-+ (void)exitTapped;
-@end
-
-@implementation LoginManager
-+ (void)loginTapped {
-    NSString *inputKey = keyTextField.text;
-    if (inputKey.length > 0) {
-        verifyKey(inputKey);
-    } else {
-        UIViewController *topVC = [UIApplication sharedApplication].delegate.window.rootViewController;
-        UIAlertController *errAlert = [UIAlertController alertControllerWithTitle:@"Xəta" message:@"Açar boş ola bilməz!" preferredStyle:UIAlertControllerStyleAlert];
-        [topVC presentViewController:errAlert animated:YES completion:nil];
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            [errAlert dismissViewControllerAnimated:YES completion:nil];
-        });
-    }
-}
-
-+ (void)exitTapped {
-    abort();
-}
-@end
 
 %ctor {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
