@@ -1,11 +1,9 @@
 #import <UIKit/UIKit.h>
 
-// Menyunun vəziyyətini və jesti idarə etmək üçün sinif
 @interface OverlayManager : NSObject
+@property (strong, nonatomic) UIWindow *menuWindow;
 + (instancetype)sharedInstance;
-@property (nonatomic, assign) BOOL isMenuOpen;
-@property (nonatomic, strong) UIView *menuView; // Menyuzun UI elementi (əgər varsa)
-- (void)setupGesture;
+- (void)toggleMenu;
 @end
 
 @implementation OverlayManager
@@ -19,64 +17,120 @@
     return sharedInstance;
 }
 
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        [self setupGesture];
+    }
+    return self;
+}
+
 - (void)setupGesture {
-    // UIWindow tam yüklənəndən sonra jesti əlavə edirik
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(5.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+    // Oyun tam yüklendikten sonra jesti əlavə edirik
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         UIWindow *keyWindow = nil;
         for (UIWindow *window in [UIApplication sharedApplication].windows) {
-            if ([window isKeyWindow]) {
+            if (window.isKeyWindow) {
                 keyWindow = window;
                 break;
             }
         }
+        if (!keyWindow) {
+            keyWindow = [UIApplication sharedApplication].keyWindow;
+        }
         
         if (keyWindow) {
-            UITapGestureRecognizer *tripleTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleTripleTap:)];
-            tripleTap.numberOfTapsRequired = 3;     // 3 dəfə basma
-            tripleTap.numberOfTouchesRequired = 3;  // 3 barmaq
-            [keyWindow addGestureRecognizer:tripleTap];
-            NSLog(@"[Zirve] 3 barmaq 3 dəfə toxunma jesti uğurla əlavə edildi!");
+            UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleTripleTap:)];
+            tap.numberOfTapsRequired = 3;
+            tap.numberOfTouchesRequired = 3;
+            [keyWindow addGestureRecognizer:tap];
         }
     });
 }
 
 - (void)handleTripleTap:(UITapGestureRecognizer *)sender {
     if (sender.state == UIGestureRecognizerStateEnded) {
-        self.isMenuOpen = !self.isMenuOpen;
-        
-        // Burada menyunun görünürlüğünü tənzimləyirik
-        // Əgər menyu pəncərəniz/görünüşünüz varsa buraya əlavə edin:
-        // self.menuView.hidden = !self.isMenuOpen;
-        
-        if (self.isMenuOpen) {
-            NSLog(@"[Zirve] Menyу açıldı!");
-        } else {
-            NSLog(@"[Zirve] Menyу bağlandı!");
+        [self toggleMenu];
+    }
+}
+
+- (void)toggleMenu {
+    if (self.menuWindow) {
+        [self.menuWindow setHidden:YES];
+        self.menuWindow = nil;
+        return;
+    }
+
+    UIWindowScene *scene = nil;
+    for (UIScene *s in [UIApplication sharedApplication].connectedScenes) {
+        if (s.activationState == UISceneActivationStateForegroundActive && [s isKindOfClass:[UIWindowScene class]]) {
+            scene = (UIWindowScene *)s;
+            break;
         }
     }
+
+    if (scene) {
+        self.menuWindow = [[UIWindow alloc] initWithWindowScene:scene];
+    } else {
+        self.menuWindow = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
+    }
+
+    self.menuWindow.windowLevel = UIWindowLevelAlert + 1;
+    self.menuWindow.backgroundColor = [UIColor clearColor];
+
+    UIViewController *vc = [[UIViewController alloc] init];
+    vc.view.backgroundColor = [UIColor clearColor];
+
+    // Menyu pəncərəsi (Container)
+    UIView *container = [[UIView alloc] initWithFrame:CGRectMake(50, 100, 280, 320)];
+    container.backgroundColor = [[UIColor blackColor] colorWithAlphaComponent:0.85];
+    container.layer.cornerRadius = 16;
+    container.layer.borderWidth = 1.5;
+    container.layer.borderColor = [UIColor systemGreenColor].CGColor;
+
+    // Başlıq
+    UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 15, 280, 30)];
+    titleLabel.text = @"PUBG Ultimate Menu";
+    titleLabel.textColor = [UIColor whiteColor];
+    titleLabel.textAlignment = NSTextAlignmentCenter;
+    titleLabel.font = [UIFont boldSystemFontOfSize:18];
+    [container addSubview:titleLabel];
+
+    // Bağlama düyməsi (X)
+    UIButton *closeBtn = [UIButton buttonWithType:UIButtonTypeSystem];
+    closeBtn.frame = CGRectMake(235, 10, 35, 35);
+    [closeBtn setTitle:@"✕" forState:UIControlStateNormal];
+    [closeBtn setTitleColor:[UIColor redColor] forState:UIControlStateNormal];
+    [closeBtn.titleLabel setFont:[UIFont boldSystemFontOfSize:18]];
+    [closeBtn addTarget:self action:@selector(toggleMenu) forControlEvents:UIControlEventTouchUpInside];
+    [container addSubview:closeBtn];
+
+    // Funksiya / Switch nümunəsi
+    UILabel *switchLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 70, 180, 30)];
+    switchLabel.text = @"ESP Box / Line";
+    switchLabel.textColor = [UIColor whiteColor];
+    switchLabel.font = [UIFont systemFontOfSize:14];
+    [container addSubview:switchLabel];
+
+    UISwitch *sw = [[UISwitch alloc] initWithFrame:CGRectMake(210, 70, 50, 30)];
+    [sw setOnTintColor:[UIColor systemGreenColor]];
+    [container addSubview:sw];
+
+    // Alt məlumat
+    UILabel *infoLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 260, 240, 30)];
+    infoLabel.text = @"Status: Active";
+    infoLabel.textColor = [UIColor lightGrayColor];
+    infoLabel.font = [UIFont systemFontOfSize:12];
+    infoLabel.textAlignment = NSTextAlignmentCenter;
+    [container addSubview:infoLabel];
+
+    [vc.view addSubview:container];
+    self.menuWindow.rootViewController = vc;
+    [self.menuWindow makeKeyAndVisible];
 }
 
 @end
 
-// Lisenziya yoxlaması
-BOOL checkLicense() {
-    NSString *keyPath = @"/var/mobile/Documents/key.txt";
-    NSError *error = nil;
-    NSString *savedKey = [NSString stringWithContentsOfFile:keyPath encoding:NSUTF8StringEncoding error:&error];
-    savedKey = [savedKey stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-    if ([savedKey isEqualToString:@"ZIRVE-2026"]) {
-        return YES;
-    }
-    return NO;
-}
-
 %ctor {
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        if (checkLicense()) {
-            NSLog(@"[Zirve] Key Təsdiqləndi!");
-            [[OverlayManager sharedInstance] setupGesture];
-        } else {
-            NSLog(@"[Zirve] Xəta: Yanlış və ya tapılmadı!");
-        }
-    });
+    [OverlayManager sharedInstance];
 }
