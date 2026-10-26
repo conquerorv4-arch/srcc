@@ -21,7 +21,7 @@
 
 - (void)setupGesture {
     // UIWindow tam yüklənəndən sonra jesti əlavə edirik
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(5.0 * NSEC_PER_SEC)), dispatch_get_main_query(), ^{
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(5.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         UIWindow *keyWindow = nil;
         for (UIWindow *window in [UIApplication sharedApplication].windows) {
             if ([window isKeyWindow]) {
@@ -71,7 +71,7 @@ BOOL checkLicense() {
 }
 
 %ctor {
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_query(), ^{
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         if (checkLicense()) {
             NSLog(@"[Zirve] Key Təsdiqləndi!");
             [[OverlayManager sharedInstance] setupGesture];
