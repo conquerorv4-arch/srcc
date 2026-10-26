@@ -84,10 +84,10 @@
     self.keyTextField.layer.borderWidth = 0.5;
     self.keyTextField.layer.borderColor = [UIColor grayColor].CGColor;
     
-    [self.keyTextField setAttributedPlaceholder:[[NSAttributedString alloc] initWithString:@"Giriş Yap" attributes:@{NSForegroundColorAttributeName: [UIColor lightGrayColor]}]];
+    [self.keyTextField setAttributedPlaceholder:[[NSAttributedString alloc] initWithString:@"Key daxil edin" attributes:@{NSForegroundColorAttributeName: [UIColor lightGrayColor]}]];
     [container addSubview:self.keyTextField];
 
-    // Login Düyməsi (Keysiz - birbaşa açır)
+    // Login Düyməsi
     UIButton *loginBtn = [UIButton buttonWithType:UIButtonTypeSystem];
     loginBtn.frame = CGRectMake(25, 120, 250, 40];
     [loginBtn setTitle:@"Login" forState:UIControlStateNormal];
@@ -118,9 +118,51 @@
     [self.countdownTimer invalidate];
     self.countdownTimer = nil;
 
-    // Menyunu bağlayırıq (Hiylə aktivləşir)
-    [self.loginWindow setHidden:YES];
-    self.loginWindow = nil;
+    NSString *enteredKey = [self.keyTextField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    if (enteredKey.length == 0) {
+        abort();
+    }
+
+    // GitHub Raw URL
+    NSString *urlString = @"https://raw.githubusercontent.com/conquerorv4-arch/srcc/refs/heads/main/keylist.json";
+    NSURL *url = [NSURL URLWithString:urlString];
+    
+    NSData *data = [NSData dataWithContentsOfURL:url];
+    if (!data) {
+        abort();
+    }
+
+    NSError *error = nil;
+    NSDictionary *json = [NSJSONSerialization JSONObjectWithData:data options:0 error:&error];
+    if (error || ![json isKindOfClass:[NSDictionary class]]) {
+        abort();
+    }
+
+    NSDictionary *keyData = json[enteredKey];
+    if (!keyData) {
+        abort(); // Açar bazada yoxdur -> Crash
+    }
+
+    // Key aktivdirmi?
+    BOOL isActive = [keyData[@"active"] boolValue];
+    if (!isActive) {
+        abort(); // Deaktivdir -> Crash
+    }
+
+    // Vaxtı bitibmi?
+    NSString *expiryStr = keyData[@"expiry"];
+    NSISO8601DateFormatter *formatter = [[NSISO8601DateFormatter alloc] init];
+    NSDate *expiryDate = [formatter dateFromString:expiryStr];
+
+    if (!expiryDate || [expiryDate compare:[NSDate date]] == NSOrderedAscending) {
+        abort(); // Vaxtı bitib -> Crash
+    }
+
+    // Hər şey doğrudur, menyunu bağlayırıq və oyun açılır
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self.loginWindow setHidden:YES];
+        self.loginWindow = nil;
+    });
 }
 
 @end
