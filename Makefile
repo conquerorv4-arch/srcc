@@ -1,4 +1,4 @@
-THEOS = /Users/runner/theos
+THEOS = $(shell echo ~/theos)
 TARGET := iphone:clang:latest:14.0
 INSTALL_TARGET_PROCESSES = -
 
@@ -9,8 +9,5 @@ TWEAK_NAME = PubgOverlay
 PubgOverlay_FILES = Tweak.x
 PubgOverlay_CFLAGS = -fobjc-arc
 
-THEOS_MAKE_PATH = /Users/runner/theos/makefiles
-include $(THEOS_MAKE_PATH)/tweak.mk
-CC = clang
-CXX = clang++
-include $(THEOS_MAKE_PATH)/package.mk
+include $(THEOS)/makefiles/tweak.mk
+include $(THEOS)/makefiles/package.mk
