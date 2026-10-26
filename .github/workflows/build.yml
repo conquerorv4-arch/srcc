@@ -1,0 +1,31 @@
+name: Build iOS Tweak
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Set up Theos
+      run: |
+        git clone --recursive https://github.com/theos/theos.git ~/theos
+        # Əgər SDK lazımdırsa bura əlavə edə bilərik
+
+    - name: Build with Make
+      run: |
+        make clean && make
+      env:
+        THEOS: /Users/runner/theos
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: PubgOverlay
+        path: .theos/obj/*.dylib

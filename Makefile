@@ -1,5 +1,5 @@
 THEOS = /root/theos
-TARGET := iphone:clang:latest:7.0
+TARGET := iphone:clang:16.5:7.0
 INSTALL_TARGET_PROCESSES = ⁠-⁠
 
 
