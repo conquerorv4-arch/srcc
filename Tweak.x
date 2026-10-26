@@ -2,6 +2,7 @@
 
 @interface OverlayManager : NSObject
 @property (strong, nonatomic) UIWindow *menuWindow;
+@property (strong, nonatomic) UIWindow *floatingWindow;
 + (instancetype)sharedInstance;
 - (void)toggleMenu;
 @end
@@ -20,38 +21,69 @@
 - (instancetype)init {
     self = [super init];
     if (self) {
-        [self setupGesture];
+        [self setupFloatingButton];
     }
     return self;
 }
 
-- (void)setupGesture {
-    // Oyun tam yüklendikten sonra jesti əlavə edirik
+- (void)setupFloatingButton {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        UIWindow *keyWindow = nil;
-        for (UIWindow *window in [UIApplication sharedApplication].windows) {
-            if (window.isKeyWindow) {
-                keyWindow = window;
+        UIWindowScene *scene = nil;
+        for (UIScene *s in [UIApplication sharedApplication].connectedScenes) {
+            if (s.activationState == UISceneActivationStateForegroundActive && [s isKindOfClass:[UIWindowScene class]]) {
+                scene = (UIWindowScene *)s;
                 break;
             }
         }
-        if (!keyWindow) {
-            keyWindow = [UIApplication sharedApplication].keyWindow;
+
+        if (scene) {
+            self.floatingWindow = [[UIWindow alloc] initWithWindowScene:scene];
+        } else {
+            self.floatingWindow = [[UIWindow alloc] initWithFrame:CGRectMake(20, 100, 50, 50)];
         }
-        
-        if (keyWindow) {
-            UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleTripleTap:)];
-            tap.numberOfTapsRequired = 3;
-            tap.numberOfTouchesRequired = 3;
-            [keyWindow addGestureRecognizer:tap];
-        }
+
+        self.floatingWindow.windowLevel = UIWindowLevelAlert + 2;
+        self.floatingWindow.backgroundColor = [UIColor clearColor];
+
+        UIViewController *floatVc = [[UIViewController alloc] init];
+        floatVc.view.backgroundColor = [UIColor clearColor];
+
+        // Yumru qara düymə
+        UIButton *floatBtn = [UIButton buttonWithType:UIButtonTypeCustom];
+        floatBtn.frame = CGRectMake(15, 100, 45, 45);
+        floatBtn.backgroundColor = [UIColor blackColor];
+        [floatBtn setTitle:@"PUBG" forState:UIControlStateNormal];
+        [floatBtn setTitleColor:[UIColor systemGreenColor] forState:UIControlStateNormal];
+        floatBtn.titleLabel.font = [UIFont boldSystemFontOfSize:11];
+        floatBtn.layer.cornerRadius = 22.5;
+        floatBtn.layer.borderWidth = 1.5;
+        floatBtn.layer.borderColor = [UIColor systemGreenColor].CGColor;
+        [floatBtn addTarget:self action:@selector(toggleMenu) forControlEvents:UIControlEventTouchUpInside];
+
+        // Düyməni sürükləmək (hərəkət etdirmək) üçün pan jesti
+        UIPanGestureRecognizer *pan = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(handlePan:)];
+        [floatBtn addGestureRecognizer:pan];
+
+        [floatVc.view addSubview:floatBtn];
+        self.floatingWindow.rootViewController = floatVc;
+        [self.floatingWindow makeKeyAndVisible];
     });
 }
 
-- (void)handleTripleTap:(UITapGestureRecognizer *)sender {
-    if (sender.state == UIGestureRecognizerStateEnded) {
-        [self toggleMenu];
-    }
+- (void)handlePan:(UIPanGestureRecognizer *)sender {
+    UIView *btn = sender.view;
+    CGPoint translation = [sender translationInView:btn.superview];
+    CGPoint center = CGPointMake(btn.center.x + translation.x, btn.center.y + translation.y);
+    
+    // Ekran sərhədlərində qalması üçün
+    CGFloat screenWidth = [UIScreen mainScreen].bounds.size.width;
+    CGFloat screenHeight = [UIScreen mainScreen].bounds.size.height;
+    
+    center.x = MAX(25, MIN(screenWidth - 25, center.x));
+    center.y = MAX(25, MIN(screenHeight - 25, center.y));
+    
+    btn.center = center;
+    [sender setTranslation:CGPointZero inView:btn.superview];
 }
 
 - (void)toggleMenu {
