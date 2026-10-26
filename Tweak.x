@@ -7,12 +7,12 @@ static UITextField *keyTextField = nil;
 static NSTimer *authTimer = nil;
 static BOOL isAuthorized = NO;
 
-// Forward declarations
 void verifyKey(NSString *inputKey);
 
 @interface LoginManager : NSObject <UITextFieldDelegate>
 + (instancetype)sharedInstance;
 - (void)loginTapped;
+- (void)pasteTapped;
 - (void)exitTapped;
 - (void)doneTapped;
 @end
@@ -38,6 +38,14 @@ void verifyKey(NSString *inputKey);
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
             [errAlert dismissViewControllerAnimated:YES completion:nil];
         });
+    }
+}
+
+// Panodakı (Clipboard) mətni avtomatik olaraq xanaya yapışdırır
+- (void)pasteTapped {
+    UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
+    if (pasteboard.string) {
+        keyTextField.text = pasteboard.string;
     }
 }
 
@@ -106,7 +114,7 @@ void showLoginMenu() {
         UIWindowScene *scene = nil;
         for (UIScene *s in [UIApplication sharedApplication].connectedScenes) {
             if ([s.delegate respondsToSelector:@selector(window)]) {
-                scene = (UIWindowScene *)s;
+                scene = (UIScene *)s;
                 break;
             }
         }
@@ -128,63 +136,68 @@ void showLoginMenu() {
         overlayWindow.rootViewController = vc;
         [overlayWindow makeKeyAndVisible];
 
-        // Paneli ekranın üst kısmına konumlandırıyoruz ki klavye kapatmasın
-        UIView *panel = [[UIView alloc] initWithFrame:CGRectMake(30, 40, [UIScreen mainScreen].bounds.size.width - 60, 260)];
-        panel.backgroundColor = [[UIColor blackColor] colorWithAlphaComponent:0.85];
-        panel.layer.cornerRadius = 16;
-        panel.layer.borderWidth = 1.5;
-        panel.layer.borderColor = [UIColor cyanColor].CGColor;
+        // Ekranın daha yuxarı hissəsində yerləşdirmək üçün koordinat
+        UIView *panel = [[UIView alloc] initWithFrame:CGRectMake(25, 30, [UIScreen mainScreen].bounds.size.width - 50, 240)];
+        panel.backgroundColor = [UIColor colorWithRed:0.07 green:0.07 blue:0.08 alpha:0.95];
+        panel.layer.cornerRadius = 14;
+        panel.layer.borderWidth = 1;
+        panel.layer.borderColor = [UIColor colorWithWhite:0.2 alpha:1.0].CGColor;
         [vc.view addSubview:panel];
 
-        UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(10, 15, panel.frame.size.width - 20, 30)];
-        titleLabel.text = @"PUBG Ultimate Login";
-        titleLabel.textColor = [UIColor cyanColor];
-        titleLabel.font = [UIFont boldSystemFontOfSize:18];
-        titleLabel.textAlignment = NSTextAlignmentCenter;
+        // "Sign in" Başlığı
+        UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 18, panel.frame.size.width - 40, 24)];
+        titleLabel.text = @"Sign in";
+        titleLabel.textColor = [UIColor whiteColor];
+        titleLabel.font = [UIFont boldSystemFontOfSize:20];
         [panel addSubview:titleLabel];
 
-        UILabel *subLabel = [[UILabel alloc] initWithFrame:CGRectMake(10, 50, panel.frame.size.width - 20, 20)];
-        subLabel.text = @"Lütfen lisans anahtarını girin:";
-        subLabel.textColor = [UIColor whiteColor];
-        subLabel.font = [UIFont systemFontOfSize:13];
-        subLabel.textAlignment = NSTextAlignmentCenter;
+        // Alt açıqlama mətni
+        UILabel *subLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 44, panel.frame.size.width - 40, 18)];
+        subLabel.text = @"Unlock advanced features through secure sign-in.";
+        subLabel.textColor = [UIColor colorWithWhite:0.6 alpha:1.0];
+        subLabel.font = [UIFont systemFontOfSize:11];
         [panel addSubview:subLabel];
 
-        keyTextField = [[UITextField alloc] initWithFrame:CGRectMake(20, 80, panel.frame.size.width - 40, 40)];
-        keyTextField.backgroundColor = [[UIColor darkGrayColor] colorWithAlphaComponent:0.6];
+        // Şifrə/Açar xanası (Password input)
+        keyTextField = [[UITextField alloc] initWithFrame:CGRectMake(20, 75, panel.frame.size.width - 40, 42)];
+        keyTextField.backgroundColor = [UIColor colorWithRed:0.12 green:0.12 blue:0.14 alpha:1.0];
         keyTextField.textColor = [UIColor whiteColor];
         keyTextField.font = [UIFont systemFontOfSize:14];
         keyTextField.borderStyle = UITextBorderStyleRoundedRect;
-        keyTextField.placeholder = @"Anahtarı buraya yazın...";
+        keyTextField.attributedPlaceholder = [[NSAttributedString alloc] initWithString:@"Password / Key" attributes:@{NSForegroundColorAttributeName: [UIColor colorWithWhite:0.4 alpha:1.0]}];
         keyTextField.delegate = [LoginManager sharedInstance];
         keyTextField.returnKeyType = UIReturnKeyDone;
-
-        // Klavyenin üstüne Kapat ve Giriş Et butonları ekliyoruz
-        UIToolbar *keyboardToolbar = [[UIToolbar alloc] initWithFrame:CGRectMake(0, 0, [UIScreen mainScreen].bounds.size.width, 44)];
-        keyboardToolbar.barStyle = UIBarStyleDefault;
-        UIBarButtonItem *flexSpace = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil];
-        UIBarButtonItem *doneBtn = [[UIBarButtonItem alloc] initWithTitle:@"Kapat" style:UIBarButtonItemStyleDone target:[LoginManager sharedInstance] action:@selector(doneTapped)];
-        UIBarButtonItem *submitBtn = [[UIBarButtonItem alloc] initWithTitle:@"Giriş Et" style:UIBarButtonItemStylePlain target:[LoginManager sharedInstance] action:@selector(loginTapped)];
-        keyboardToolbar.items = @[doneBtn, flexSpace, submitBtn];
-        [keyboardToolbar sizeToFit];
-        keyTextField.inputAccessoryView = keyboardToolbar;
-
+        keyTextField.secureTextEntry = NO; // İstəsən YES edə bilərsən
         [panel addSubview:keyTextField];
 
+        // "Forgot password?" yerinə "Paste" düyməsi
+        UIButton *pasteBtn = [UIButton buttonWithType:UIButtonTypeSystem];
+        pasteBtn.frame = CGRectMake(panel.frame.size.width - 90, 120, 70, 20);
+        [pasteBtn setTitle:@"Paste" forState:UIControlStateNormal];
+        [pasteBtn setTitleColor:[UIColor colorWithWhite:0.6 alpha:1.0] forState:UIControlStateNormal];
+        pasteBtn.titleLabel.font = [UIFont systemFontOfSize:12];
+        [pasteBtn addTarget:[LoginManager sharedInstance] action:@selector(pasteTapped) forControlEvents:UIControlEventTouchUpInside];
+        [panel addSubview:pasteBtn];
+
+        // "Sign in" Əsas düymə
         UIButton *loginBtn = [UIButton buttonWithType:UIButtonTypeSystem];
-        loginBtn.frame = CGRectMake(25, 135, panel.frame.size.width - 50, 40);
-        [loginBtn setTitle:@"GİRİŞ ET" forState:UIControlStateNormal];
-        [loginBtn setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
-        loginBtn.backgroundColor = [UIColor cyanColor];
+        loginBtn.frame = CGRectMake(20, 152, panel.frame.size.width - 40, 44);
+        [loginBtn setTitle:@"Sign in" forState:UIControlStateNormal];
+        [loginBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+        loginBtn.backgroundColor = [UIColor colorWithRed:0.15 green:0.15 blue:0.18 alpha:1.0];
         loginBtn.layer.cornerRadius = 8;
+        loginBtn.layer.borderWidth = 1;
+        loginBtn.layer.borderColor = [UIColor colorWithWhite:0.3 alpha:1.0].CGColor;
         loginBtn.titleLabel.font = [UIFont boldSystemFontOfSize:15];
         [loginBtn addTarget:[LoginManager sharedInstance] action:@selector(loginTapped) forControlEvents:UIControlEventTouchUpInside];
         [panel addSubview:loginBtn];
 
+        // Çıxış düyməsi (gizli və ya sadə formada)
         UIButton *exitBtn = [UIButton buttonWithType:UIButtonTypeSystem];
-        exitBtn.frame = CGRectMake(25, 185, panel.frame.size.width - 50, 35);
-        [exitBtn setTitle:@"Çıkış" forState:UIControlStateNormal];
+        exitBtn.frame = CGRectMake(20, 202, panel.frame.size.width - 40, 25);
+        [exitBtn setTitle:@"Çıxış" forState:UIControlStateNormal];
         [exitBtn setTitleColor:[UIColor redColor] forState:UIControlStateNormal];
+        exitBtn.titleLabel.font = [UIFont systemFontOfSize:12];
         [exitBtn addTarget:[LoginManager sharedInstance] action:@selector(exitTapped) forControlEvents:UIControlEventTouchUpInside];
         [panel addSubview:exitBtn];
 
