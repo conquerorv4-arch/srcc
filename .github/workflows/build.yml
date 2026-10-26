@@ -15,13 +15,13 @@ jobs:
 
     - name: Set up Theos
       run: |
-        git clone --recursive https://github.com/theos/theos.git /opt/theos
+        git clone --recursive https://github.com/theos/theos.git ~/theos
 
     - name: Build with Make
       run: |
         make clean && make
       env:
-        THEOS: /opt/theos
+        THEOS: /Users/runner/theos
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
