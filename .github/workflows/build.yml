@@ -1,3 +1,4 @@
+cat << 'EOF' > .github/workflows/build.yml
 name: Build iOS Tweak
 
 on:
@@ -15,17 +16,17 @@ jobs:
 
     - name: Set up Theos
       run: |
-        git clone --recursive https://github.com/theos/theos.git ~/theos
-        # Əgər SDK lazımdırsa bura əlavə edə bilərik
+        git clone --recursive https://github.com/theos/theos.git /opt/theos
 
     - name: Build with Make
       run: |
         make clean && make
       env:
-        THEOS: /Users/runner/theos
+        THEOS: /opt/theos
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
         name: PubgOverlay
         path: .theos/obj/*.dylib
+EOF
