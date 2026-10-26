@@ -1,0 +1,9 @@
+Package: com.zirve.pubg⁠
+Name: PubgOverlay
+Version: 0.0.1
+Architecture: iphoneos-arm
+Description: An awesome MobileSubstrate tweak!
+Maintainer: @zirvedeyim0
+Author: @zirvedeyim0
+Section: Tweaks
+Depends: mobilesubstrate (>= 0.9.5000)
