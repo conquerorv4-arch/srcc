@@ -1,172 +1,53 @@
 #import <UIKit/UIKit.h>
+#include <dlfcn.h>
+#include <sys/stat.h>
 
-@interface LoginManager : NSObject
-@property (strong, nonatomic) UIWindow *loginWindow;
-@property (strong, nonatomic) UITextField *keyTextField;
-@property (strong, nonatomic) UILabel *timerLabel;
-@property (strong, nonatomic) NSTimer *countdownTimer;
-@property (nonatomic) NSInteger remainingSeconds;
-+ (instancetype)sharedInstance;
-- (void)showLoginMenu;
-@end
+// Global dəyişənlər
+static UIWindow *overlayWindow = nil;
+static UITextField *keyTextField = nil;
+static NSTimer *authTimer = nil;
+static BOOL isAuthorized = NO;
 
-@implementation LoginManager
+// Lisenziya yoxlama funksiyası
+void verifyKey(NSString *inputKey) {
+    if (isAuthorized) return;
 
-+ (instancetype)sharedInstance {
-    static LoginManager *sharedInstance = nil;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        sharedInstance = [[LoginManager alloc] init];
-    });
-    return sharedInstance;
-}
-
-- (instancetype)init {
-    self = [super init];
-    if (self) {
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            [self showLoginMenu];
-        });
-    }
-    return self;
-}
-
-- (void)showLoginMenu {
-    if (self.loginWindow) return;
-
-    UIWindowScene *scene = nil;
-    for (UIScene *s in [UIApplication sharedApplication].connectedScenes) {
-        if (s.activationState == UISceneActivationStateForegroundActive) {
-            scene = (UIWindowScene *)s;
-            break;
-        }
-    }
-
-    if (scene) {
-        self.loginWindow = [[UIWindow alloc] initWithWindowScene:scene];
-    } else {
-        self.loginWindow = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
-    }
-
-    self.loginWindow.windowLevel = UIWindowLevelAlert + 10;
-    self.loginWindow.backgroundColor = [[UIColor blackColor] colorWithAlphaComponent:0.6];
-
-    UIViewController *vc = [[UIViewController alloc] init];
-    vc.view.backgroundColor = [UIColor clearColor];
-
-    // Mərkəzi qutu
-    UIView *container = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 300, 210)];
-    container.center = vc.view.center;
-    container.backgroundColor = [UIColor colorWithRed:0.12 green:0.12 blue:0.14 alpha:0.95];
-    container.layer.cornerRadius = 14;
-    container.layer.borderWidth = 1;
-    container.layer.borderColor = [UIColor darkGrayColor].CGColor;
-
-    // Geri sayım (Timer) yazısı
-    self.remainingSeconds = 15;
-    self.timerLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 15, 300, 25)];
-    self.timerLabel.text = [NSString stringWithFormat:@"Kalan Süre: %lds", (long)self.remainingSeconds];
-    self.timerLabel.textColor = [UIColor systemRedColor];
-    self.timerLabel.textAlignment = NSTextAlignmentCenter;
-    self.timerLabel.font = [UIFont boldSystemFontOfSize:14];
-    [container addSubview:self.timerLabel];
-
-    // Timeri işə salırıq
-    self.countdownTimer = [NSTimer scheduledTimerWithTimeInterval:1.0 target:self selector:@selector(updateTimer) userInfo:nil repeats:YES];
-
-    // TextField
-    self.keyTextField = [[UITextField alloc] initWithFrame:CGRectMake(25, 55, 250, 40)];
-    self.keyTextField.backgroundColor = [UIColor colorWithRed:0.08 green:0.08 blue:0.10 alpha:1.0];
-    self.keyTextField.textColor = [UIColor whiteColor];
-    self.keyTextField.textAlignment = NSTextAlignmentCenter;
-    self.keyTextField.font = [UIFont systemFontOfSize:14];
-    self.keyTextField.layer.cornerRadius = 8;
-    self.keyTextField.layer.borderWidth = 0.5;
-    self.keyTextField.layer.borderColor = [UIColor grayColor].CGColor;
-    
-    [self.keyTextField setAttributedPlaceholder:[[NSAttributedString alloc] initWithString:@"Key daxil edin" attributes:@{NSForegroundColorAttributeName: [UIColor lightGrayColor]}]];
-    [container addSubview:self.keyTextField];
-
-    // Login Düyməsi
-    UIButton *loginBtn = [UIButton buttonWithType:UIButtonTypeSystem];
-    loginBtn.frame = CGRectMake(25, 120, 250, 40];
-    [loginBtn setTitle:@"Login" forState:UIControlStateNormal];
-    [loginBtn setTitleColor:[UIColor systemBlueColor] forState:UIControlStateNormal];
-    loginBtn.titleLabel.font = [UIFont boldSystemFontOfSize:16];
-    [loginBtn addTarget:self action:@selector(verifyKey) forControlEvents:UIControlEventTouchUpInside];
-    [container addSubview:loginBtn];
-
-    [vc.view addSubview:container];
-    self.loginWindow.rootViewController = vc;
-    [self.loginWindow makeKeyAndVisible];
-}
-
-- (void)updateTimer {
-    self.remainingSeconds--;
-    if (self.remainingSeconds > 0) {
-        self.timerLabel.text = [NSString stringWithFormat:@"Kalan Süre: %lds", (long)self.remainingSeconds];
-    } else {
-        [self.countdownTimer invalidate];
-        self.countdownTimer = nil;
-        // 15 saniyə bitdi -> Çöküş (Crash)!
-        abort();
-    }
-}
-
-- (void)verifyKey {
-    // Timeri dayandırırıq
-    [self.countdownTimer invalidate];
-    self.countdownTimer = nil;
-
-    NSString *enteredKey = [self.keyTextField.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-    if (enteredKey.length == 0) {
-        abort();
-    }
-
-    // GitHub Raw URL
-    NSString *urlString = @"https://raw.githubusercontent.com/conquerorv4-arch/srcc/refs/heads/main/keylist.json";
+    // GitHub-dakı keylist.json ünvanı (və ya yerli yoxlama)
+    NSString *urlString = @"https://raw.githubusercontent.com/conquerorv4-arch/srcc/main/keylist.json";
     NSURL *url = [NSURL URLWithString:urlString];
     
     NSData *data = [NSData dataWithContentsOfURL:url];
     if (!data) {
-        abort();
+        // Əgər internet yoxdursa və ya fayl oxunmursa, sadəcə yerli yoxlama da edə bilərik
+        return;
     }
 
     NSError *error = nil;
     NSDictionary *json = [NSJSONSerialization JSONObjectWithData:data options:0 error:&error];
-    if (error || ![json isKindOfClass:[NSDictionary class]]) {
-        abort();
+    
+    if (json && [json[@"keys"] isKindOfClass:[NSArray class]]) {
+        NSArray *validKeys = json[@"keys"];
+        if ([validKeys containsObject:inputKey]) {
+            isAuthorized = YES;
+            [authTimer invalidate];
+            authTimer = nil;
+            
+            // Doğrudursa menyunu gizlət və uğur mesajı göstər
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [overlayWindow setHidden:YES];
+                [overlayWindow removeFromSuperview];
+                overlayWindow = nil;
+                
+                // Uğurlu giriş bildirişi
+                UIWindow *keyWindow = [UIApplication sharedApplication].keyWindow;
+                UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Uğurludur" message:@"Lisenziya təsdiqləndi! Oyun açılır." preferredStyle:UIAlertControllerStyleAlert];
+                [keyWindow.rootViewController presentViewController:alert animated:YES completion:nil];
+                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                    [alert dismissViewControllerAnimated:YES completion:nil];
+                });
+            });
+        }
     }
-
-    NSDictionary *keyData = json[enteredKey];
-    if (!keyData) {
-        abort(); // Açar bazada yoxdur -> Crash
-    }
-
-    // Key aktivdirmi?
-    BOOL isActive = [keyData[@"active"] boolValue];
-    if (!isActive) {
-        abort(); // Deaktivdir -> Crash
-    }
-
-    // Vaxtı bitibmi?
-    NSString *expiryStr = keyData[@"expiry"];
-    NSISO8601DateFormatter *formatter = [[NSISO8601DateFormatter alloc] init];
-    NSDate *expiryDate = [formatter dateFromString:expiryStr];
-
-    if (!expiryDate || [expiryDate compare:[NSDate date]] == NSOrderedAscending) {
-        abort(); // Vaxtı bitib -> Crash
-    }
-
-    // Hər şey doğrudur, menyunu bağlayırıq və oyun açılır
-    dispatch_async(dispatch_get_main_queue(), ^{
-        [self.loginWindow setHidden:YES];
-        self.loginWindow = nil;
-    });
 }
 
-@end
-
-%ctor {
-    [LoginManager sharedInstance];
-}
+// 15 saniyə ərzində açar daxil edilmədikdə və ya səhv oldu
