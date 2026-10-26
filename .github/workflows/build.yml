@@ -19,7 +19,7 @@ jobs:
 
     - name: Build with Make
       run: |
-        make clean && make
+        make clean && make THEOS=~/theos
       env:
         THEOS: /Users/runner/theos
 
