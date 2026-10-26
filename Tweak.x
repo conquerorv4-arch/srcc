@@ -5,7 +5,7 @@
 + (instancetype)sharedInstance;
 @property (nonatomic, assign) BOOL isMenuOpen;
 @property (nonatomic, strong) UIView *menuView; // Menyuzun UI elementi (əgər varsa)
--setupGesture;
+- (void)setupGesture;
 @end
 
 @implementation OverlayManager
@@ -58,7 +58,7 @@
 
 @end
 
-// Lisizans yoxlaması
+// Lisenziya yoxlaması
 BOOL checkLicense() {
     NSString *keyPath = @"/var/mobile/Documents/key.txt";
     NSError *error = nil;
