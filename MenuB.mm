@@ -43,8 +43,24 @@ extern bool MenDeal;
 - (void)loadView
 {
     CGFloat w = [UIApplication sharedApplication].windows[0].rootViewController.view.frame.size.width;
-    CGFloat h = [UIApplication sharedApplication].windows[0].rootViewController.view.frame.size.height;
+    CGFloat h = [UIApplication sharedApplication].windows[0].rootViewController.view.frame.size.width ? [UIApplication sharedApplication].windows[0].rootViewController.view.frame.size.height : 0;
     self.view = [[MTKView alloc] initWithFrame:CGRectMake(0, 0, w, h)];
+}
+
+- (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
+    // Əgər düyməyə toxunulursa, toxunuşu birbaşa düyməyə veririk
+    CGPoint buttonPoint = [self.menuButton convertPoint:point fromView:self];
+    if ([self.menuButton pointInside:buttonPoint withEvent:event]) {
+        return self.menuButton;
+    }
+    
+    // Menyu açıqdısa toxunuşları qəbul edirik
+    if (MenDeal) {
+        return [super hitTest:point withEvent:event];
+    }
+    
+    // Menyu bağlıdırsa, toxunuşları arxadakı oyuna ötürürük ki, oyun düymələri işləsin
+    return nil;
 }
 
 - (void)viewDidLoad {
@@ -55,19 +71,18 @@ extern bool MenDeal;
     self.mtkView.backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0];
     self.mtkView.clipsToBounds = YES;
     
-    // Həmişə toxunuşların işləməsi üçün YES edirik
     [self.mtkView setUserInteractionEnabled:YES];
     
-    // Üstə açılıb-bağlanmaq üçün toxunula bilən səliqəli düymə əlavə edirik
+    // Düyməni ekranın yuxarı sol hissəsində, heç bir oyun elementinə mane olmayacaq şəkildə yerləşdiririk
     self.menuButton = [UIButton buttonWithType:UIButtonTypeCustom];
-    self.menuButton.frame = CGRectMake(30, 60, 45, 45);
-    self.menuButton.backgroundColor = [UIColor colorWithWhite:0.1f alpha:0.8f];
-    self.menuButton.layer.cornerRadius = 22.5f;
-    self.menuButton.layer.borderWidth = 1.5f;
-    self.menuButton.layer.borderColor = [UIColor whiteColor].CGColor;
+    self.menuButton.frame = CGRectMake(20, 100, 55, 55);
+    self.menuButton.backgroundColor = [UIColor colorWithRed:0.1f green:0.1f blue:0.1f alpha:0.9f];
+    self.menuButton.layer.cornerRadius = 27.5f;
+    self.menuButton.layer.borderWidth = 2.0f;
+    self.menuButton.layer.borderColor = [UIColor greenColor].CGColor; // Yaşıl rəngdə aydın görünən haşiyə
     [self.menuButton setTitle:@"MENU" forState:UIControlStateNormal];
     [self.menuButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-    self.menuButton.titleLabel.font = [UIFont boldSystemFontOfSize:10];
+    self.menuButton.titleLabel.font = [UIFont boldSystemFontOfSize:12];
     [self.menuButton addTarget:self action:@selector(toggleMenu) forControlEvents:UIControlEventTouchUpInside];
     
     [self.view addSubview:self.menuButton];
@@ -96,18 +111,10 @@ extern bool MenDeal;
     io.MouseDown[0] = hasActiveTouch;
 }
 
-- (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event { 
-    if (MenDeal) [self updateIOWithTouchEvent:event]; 
-}
-- (void)touchesMoved:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event { 
-    if (MenDeal) [self updateIOWithTouchEvent:event]; 
-}
-- (void)touchesCancelled:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event { 
-    if (MenDeal) [self updateIOWithTouchEvent:event]; 
-}
-- (void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event { 
-    if (MenDeal) [self updateIOWithTouchEvent:event]; 
-}
+- (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event { if (MenDeal) [self updateIOWithTouchEvent:event]; }
+- (void)touchesMoved:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event { if (MenDeal) [self updateIOWithTouchEvent:event]; }
+- (void)touchesCancelled:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event { if (MenDeal) [self updateIOWithTouchEvent:event]; }
+- (void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event { if (MenDeal) [self updateIOWithTouchEvent:event]; }
 
 - (void)drawInMTKView:(MTKView*)view
 {
@@ -120,11 +127,6 @@ extern bool MenDeal;
     io.DeltaTime = 1 / float(view.preferredFramesPerSecond ?: 60);
     
     id<MTLCommandBuffer> commandBuffer = [self.commandQueue commandBuffer];
-    
-    // Menyu açıqdısa düyməni gizlədirik, bağlayanda göstəririk
-    dispatch_async(dispatch_get_main_queue(), ^{
-        self.menuButton.hidden = MenDeal;
-    });
 
     MTLRenderPassDescriptor* renderPassDescriptor = view.currentRenderPassDescriptor;
     if (renderPassDescriptor != nil)
