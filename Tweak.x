@@ -8,14 +8,13 @@ static UITextField *keyTextField = nil;
 static NSTimer *authTimer = nil;
 static BOOL isAuthorized = NO;
 
-// MenuB.mm içindəki ImGui menyusunu idarə edən qlobal dəyişən
-extern bool MenDeal;
+// Menyu dəyişəni birbaşa burada təyin olunur
+bool MenDeal = true;
 
 void verifyKey(NSString *inputKey);
 void showFloatingButton();
 void toggleCheatMenu();
 
-// KÖMƏKÇİ SİNİFLƏR
 @interface FloatingHelper : NSObject
 @end
 @implementation FloatingHelper
@@ -142,7 +141,6 @@ void handleTimeout() {
     }
 }
 
-// Qara şəffaf yuvarlaq düymə (Floating Button)
 void showFloatingButton() {
     if (floatingWindow) return;
 
@@ -187,7 +185,6 @@ void showFloatingButton() {
     [vc.view addSubview:floatBtn];
 }
 
-// Yuvarlaq düyməyə basıldıqda DARK IOS ImGui menyusunu açır/bağlayır
 void toggleCheatMenu() {
     MenDeal = !MenDeal;
 }
