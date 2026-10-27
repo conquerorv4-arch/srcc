@@ -100,7 +100,6 @@ void verifyKey(NSString *inputKey) {
                     [alert dismissViewControllerAnimated:YES completion:nil];
                 });
                 
-                // Key uğurla keçildikdən sonra qara şəffaf yuvarlaq düyməni göstər
                 showFloatingButton();
             });
         }
@@ -149,19 +148,20 @@ void showFloatingButton() {
     floatBtn.layer.borderWidth = 0.0; // Ağ xətt/haşiyə tamamilə silindi
     floatBtn.clipsToBounds = YES;
     
-    // Yazı silindi (boş buraxıldı)
+    // Yazı yoxdur, tamamilə təmizdir
     [floatBtn setTitle:@"" forState:UIControlStateNormal];
     
-    [floatBtn addTarget:nil action:@selector(floatBtnTapped) forControlEvents:UIControlEventTouchUpInside];
+    // Düyməyə basıldıqda menyunu açmaq üçün FloatingHelper bağlandı
+    [floatBtn addTarget:[FloatingHelper class] action:@selector(floatBtnTapped) forControlEvents:UIControlEventTouchUpInside];
     
-    // Düyməni ekranda sürükləmək (Drag/Pan) üçün jest əlavə edirik
-    UIPanGestureRecognizer *pan = [[UIPanGestureRecognizer alloc] initWithTarget:nil action:@selector(floatBtnDragged:)];
+    // Düyməni ekranda sürükləmək (Drag/Pan) üçün jest əlavə edilir
+    UIPanGestureRecognizer *pan = [[UIPanGestureRecognizer alloc] initWithTarget:[FloatingHelper class] action:@selector(floatBtnDragged:)];
     [floatBtn addGestureRecognizer:pan];
     
     [vc.view addSubview:floatBtn];
 }
 
-// Düyməyə basıldıqda menyunu aç/bağla və sürüşdürmə funksiyası
+// Düymə hərəkətləri və menyu açma funksiyası
 @interface FloatingHelper : NSObject
 @end
 @implementation FloatingHelper
@@ -173,7 +173,6 @@ void showFloatingButton() {
     CGPoint translation = [pan translationInView:btn.superview];
     CGPoint center = CGPointMake(btn.center.x + translation.x, btn.center.y + translation.y);
     
-    // Ekran sərhədlərindən çıxmasının qarşısını alaq
     CGFloat screenW = [UIScreen mainScreen].bounds.size.width;
     CGFloat screenH = [UIScreen mainScreen].bounds.size.height;
     center.x = MAX(25, MIN(screenW - 25, center.x));
@@ -216,7 +215,6 @@ void toggleCheatMenu() {
     cheatMenuWindow.rootViewController = vc;
     [cheatMenuWindow makeKeyAndVisible];
 
-    // Menyu qutusu
     UIView *menuPanel = [[UIView alloc] initWithFrame:CGRectMake(50, 80, [UIScreen mainScreen].bounds.size.width - 100, 300)];
     menuPanel.backgroundColor = [UIColor colorWithRed:0.08 green:0.08 blue:0.1 alpha:0.95];
     menuPanel.layer.cornerRadius = 16;
@@ -231,13 +229,12 @@ void toggleCheatMenu() {
     menuTitle.textAlignment = NSTextAlignmentCenter;
     [menuPanel addSubview:menuTitle];
 
-    // Bağlamaq (Close) düyməsi
     UIButton *closeBtn = [UIButton buttonWithType:UIButtonTypeSystem];
     closeBtn.frame = CGRectMake(menuPanel.frame.size.width - 50, 12, 35, 30);
     [closeBtn setTitle:@"X" forState:UIControlStateNormal];
     [closeBtn setTitleColor:[UIColor redColor] forState:UIControlStateNormal];
     closeBtn.titleLabel.font = [UIFont boldSystemFontOfSize:16];
-    [closeBtn addTarget:nil action:@selector(closeMenuTapped) forControlEvents:UIControlEventTouchUpInside];
+    [closeBtn addTarget:[MenuHelper class] action:@selector(closeMenuTapped) forControlEvents:UIControlEventTouchUpInside];
     [menuPanel addSubview:closeBtn];
 }
 
