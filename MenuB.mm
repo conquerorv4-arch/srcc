@@ -1,18 +1,18 @@
 #import <Metal/Metal.h>
 #import <MetalKit/MetalKit.h>
 #import <Foundation/Foundation.h>
+#import <UIKit/UIKit.h>
 #import "MenuB.h"
 #import "imgui.h"
 #import "imgui_impl_metal.h"
 
-extern bool MenDeal;
+bool MenDeal = false;
 
 @interface CustomMTKView : MTKView
 @end
 
 @implementation CustomMTKView
 - (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
-    // Əgər menyu bağlıdırsa, bütün toxunuşları birbaşa arxadakı oyuna ötürürük (heç nəyi bloklamır)
     if (!MenDeal) {
         return nil;
     }
@@ -20,22 +20,27 @@ extern bool MenDeal;
 }
 @end
 
-@interface ImGuiDrawView () <MTKViewDelegate>
+@interface ImGuiDrawViewController : UIViewController <MTKViewDelegate>
 @property (nonatomic, strong) id <MTLDevice> device;
 @property (nonatomic, strong) id <MTLCommandQueue> commandQueue;
 @property (nonatomic, strong) UIButton *menuButton;
 @property (nonatomic, strong) CustomMTKView *customView;
 @end
 
-@implementation ImGuiDrawView
+@implementation ImGuiDrawViewController
 
-- (instancetype)initWithNibName:(nullable NSString *)nibNameOrNil bundle:(nullable NSBundle *)nibBundleOrNil
+- (void)loadView
 {
-    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
+    CGRect screenRect = [UIScreen mainScreen].bounds;
+    self.customView = [[CustomMTKView alloc] initWithFrame:screenRect];
+    self.view = self.customView;
+}
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
     _device = MTLCreateSystemDefaultDevice();
     _commandQueue = [_device newCommandQueue];
-
-    if (!self.device) abort();
+    if (!self.device) return;
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -49,30 +54,18 @@ extern bool MenDeal;
     style.Colors[ImGuiCol_Text] = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
 
     ImGui_ImplMetal_Init(_device);
-    return self;
-}
 
-- (void)loadView
-{
-    CGRect screenRect = [UIScreen mainScreen].bounds;
-    self.customView = [[CustomMTKView alloc] initWithFrame:screenRect];
-    self.view = self.customView;
-}
-
-- (void)viewDidLoad {
-    [super viewDidLoad];
     CustomMTKView *mtkView = (CustomMTKView *)self.view;
     mtkView.device = self.device;
     mtkView.delegate = self;
     mtkView.clearColor = MTLClearColorMake(0, 0, 0, 0);
     mtkView.backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0];
     mtkView.clipsToBounds = YES;
-    
-    [mtkView setUserInteractionEnabled:YES];
-    
-    // Yuxarı sol küncdə menyunu açmaq üçün həmişə işləyən düymə
+    mtkView.userInteractionEnabled = YES;
+
+    // Yuxarı sol küncdə yaşıl haşiyəli MENU düyməsi
     self.menuButton = [UIButton buttonWithType:UIButtonTypeCustom];
-    self.menuButton.frame = CGRectMake(20, 50, 55, 55);
+    self.menuButton.frame = CGRectMake(20, 60, 55, 55);
     self.menuButton.backgroundColor = [UIColor colorWithRed:0.1f green:0.1f blue:0.1f alpha:0.9f];
     self.menuButton.layer.cornerRadius = 27.5f;
     self.menuButton.layer.borderWidth = 2.0f;
@@ -82,13 +75,11 @@ extern bool MenDeal;
     self.menuButton.titleLabel.font = [UIFont boldSystemFontOfSize:12];
     [self.menuButton addTarget:self action:@selector(toggleMenu) forControlEvents:UIControlEventTouchUpInside];
     
-    // Düymənin həmişə toxunula bilməsi üçün ayrıca pəncərəyə və ya birbaşa görünüşə əlavə edirik
     [self.view addSubview:self.menuButton];
 }
 
 - (void)toggleMenu {
     MenDeal = !MenDeal;
-    // Menyu açıldıqda toxunuşları aktivləşdiririk, bağlananda sərbəst buraxırıq
     self.customView.userInteractionEnabled = MenDeal;
 }
 
@@ -139,7 +130,6 @@ extern bool MenDeal;
             
             CGSize screenSize = [UIScreen mainScreen].bounds.size;
             
-            // DARK IOS Menyu Pəncərəsi
             if (MenDeal == true)
             {            
                 ImGui::SetNextWindowPos(ImVec2(screenSize.width * 0.5f, screenSize.height * 0.5f), ImGuiCond_FirstUseEver, ImVec2(0.5f, 0.5f));
@@ -172,3 +162,17 @@ extern bool MenDeal;
 - (void)mtkView:(MTKView*)view drawableSizeWillChange:(CGSize)size {}
 
 @end
+
+static UIWindow *overlayWindow = nil;
+
+void ShowMenuWindow() {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (!overlayWindow) {
+            overlayWindow = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
+            overlayWindow.rootViewController = [[ImGuiDrawViewController alloc] init];
+            overlayWindow.windowLevel = UIWindowLevelAlert + 1;
+            overlayWindow.hidden = NO;
+            [overlayWindow makeKeyAndVisible];
+        }
+    });
+}
