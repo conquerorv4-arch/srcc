@@ -2,7 +2,7 @@
 #ifndef CustomStrcut_h
 #define CustomStrcut_h
 
-#include "imgui/imgui.h"
+#include "../imgui/imgui.h"
 #include <random>
 #include <string>
 
