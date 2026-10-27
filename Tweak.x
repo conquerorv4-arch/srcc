@@ -251,7 +251,7 @@ void toggleCheatMenu() {
 }
 
 void showLoginMenu() {
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), FRAME:^{
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         if (overlayWindow) return;
 
         UIWindowScene *scene = nil;
@@ -279,13 +279,11 @@ void showLoginMenu() {
         overlayWindow.rootViewController = vc;
         [overlayWindow makeKeyAndVisible];
 
-        // Panel eni daraldıldı və ekranda tənzimləndi (mərkəzləşdirildi)
         CGFloat screenW = [UIScreen mainScreen].bounds.size.width;
-        CGFloat panelW = screenW - 200; // Yanlardan kifayət qədər alınaraq kiçildildi
+        CGFloat panelW = screenW - 200;
         CGFloat panelX = (screenW - panelW) / 2;
 
         UIView *panel = [[UIView alloc] initWithFrame:CGRectMake(panelX, 40, panelW, 220)];
-        // Arka plan tam siyah (şeffaf deyil)
         panel.backgroundColor = [UIColor blackColor];
         panel.layer.cornerRadius = 14;
         panel.layer.borderWidth = 1;
