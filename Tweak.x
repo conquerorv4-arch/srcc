@@ -251,7 +251,7 @@ void toggleCheatMenu() {
 }
 
 void showLoginMenu() {
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), FRAME:^{
         if (overlayWindow) return;
 
         UIWindowScene *scene = nil;
@@ -279,21 +279,27 @@ void showLoginMenu() {
         overlayWindow.rootViewController = vc;
         [overlayWindow makeKeyAndVisible];
 
-        UIView *panel = [[UIView alloc] initWithFrame:CGRectMake(25, 40, [UIScreen mainScreen].bounds.size.width - 50, 220)];
-        panel.backgroundColor = [UIColor colorWithRed:0.07 green:0.07 blue:0.08 alpha:0.95];
+        // Panel eni daraldıldı və ekranda tənzimləndi (mərkəzləşdirildi)
+        CGFloat screenW = [UIScreen mainScreen].bounds.size.width;
+        CGFloat panelW = screenW - 200; // Yanlardan kifayət qədər alınaraq kiçildildi
+        CGFloat panelX = (screenW - panelW) / 2;
+
+        UIView *panel = [[UIView alloc] initWithFrame:CGRectMake(panelX, 40, panelW, 220)];
+        // Arka plan tam siyah (şeffaf deyil)
+        panel.backgroundColor = [UIColor blackColor];
         panel.layer.cornerRadius = 14;
         panel.layer.borderWidth = 1;
         panel.layer.borderColor = [UIColor colorWithWhite:0.2 alpha:1.0].CGColor;
         [vc.view addSubview:panel];
 
-        UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 16, panel.frame.size.width - 40, 22)];
+        UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 16, panelW - 40, 22)];
         titleLabel.text = @"DARK";
         titleLabel.textColor = [UIColor whiteColor];
         titleLabel.font = [UIFont boldSystemFontOfSize:20];
         titleLabel.textAlignment = NSTextAlignmentCenter;
         [panel addSubview:titleLabel];
 
-        UILabel *subLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 38, panel.frame.size.width - 40, 16)];
+        UILabel *subLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 38, panelW - 40, 16)];
         subLabel.text = @"LOGIN";
         subLabel.textColor = [UIColor colorWithWhite:0.7 alpha:1.0];
         subLabel.font = [UIFont boldSystemFontOfSize:11];
@@ -306,7 +312,7 @@ void showLoginMenu() {
         keyLabel.font = [UIFont systemFontOfSize:12];
         [panel addSubview:keyLabel];
 
-        keyTextField = [[UITextField alloc] initWithFrame:CGRectMake(20, 90, panel.frame.size.width - 110, 40)];
+        keyTextField = [[UITextField alloc] initWithFrame:CGRectMake(20, 90, panelW - 100, 40)];
         keyTextField.backgroundColor = [UIColor colorWithRed:0.12 green:0.12 blue:0.14 alpha:1.0];
         keyTextField.textColor = [UIColor whiteColor];
         keyTextField.font = [UIFont systemFontOfSize:14];
@@ -318,19 +324,19 @@ void showLoginMenu() {
         [panel addSubview:keyTextField];
 
         UIButton *pasteBtn = [UIButton buttonWithType:UIButtonTypeSystem];
-        pasteBtn.frame = CGRectMake(panel.frame.size.width - 80, 90, 60, 40);
+        pasteBtn.frame = CGRectMake(panelW - 75, 90, 55, 40);
         [pasteBtn setTitle:@"Paste" forState:UIControlStateNormal];
         [pasteBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
         pasteBtn.backgroundColor = [UIColor colorWithRed:0.15 green:0.15 blue:0.18 alpha:1.0];
         pasteBtn.layer.cornerRadius = 6;
         pasteBtn.layer.borderWidth = 1;
         pasteBtn.layer.borderColor = [UIColor colorWithWhite:0.3 alpha:1.0].CGColor;
-        pasteBtn.titleLabel.font = [UIFont boldSystemFontOfSize:13];
+        pasteBtn.titleLabel.font = [UIFont boldSystemFontOfSize:12];
         [pasteBtn addTarget:[LoginManager sharedInstance] action:@selector(pasteTapped) forControlEvents:UIControlEventTouchUpInside];
         [panel addSubview:pasteBtn];
 
         UIButton *loginBtn = [UIButton buttonWithType:UIButtonTypeSystem];
-        loginBtn.frame = CGRectMake(20, 138, panel.frame.size.width - 40, 38);
+        loginBtn.frame = CGRectMake(20, 138, panelW - 40, 38);
         [loginBtn setTitle:@"Verify" forState:UIControlStateNormal];
         [loginBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
         loginBtn.backgroundColor = [UIColor colorWithRed:0.15 green:0.15 blue:0.18 alpha:1.0];
@@ -349,7 +355,7 @@ void showLoginMenu() {
         [supportBtn addTarget:[LoginManager sharedInstance] action:@selector(supportTapped) forControlEvents:UIControlEventTouchUpInside];
         [panel addSubview:supportBtn];
 
-        UILabel *versionLbl = [[UILabel alloc] initWithFrame:CGRectMake(panel.frame.size.width - 105, 186, 80, 20)];
+        UILabel *versionLbl = [[UILabel alloc] initWithFrame:CGRectMake(panelW - 105, 186, 80, 20)];
         versionLbl.text = @"v1";
         versionLbl.textColor = [UIColor colorWithWhite:0.6 alpha:1.0];
         versionLbl.font = [UIFont systemFontOfSize:12];
