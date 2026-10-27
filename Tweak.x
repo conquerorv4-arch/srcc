@@ -3,11 +3,15 @@
 #include <sys/stat.h>
 
 static UIWindow *overlayWindow = nil;
+static UIWindow *floatingWindow = nil;
+static UIWindow *cheatMenuWindow = nil;
 static UITextField *keyTextField = nil;
 static NSTimer *authTimer = nil;
 static BOOL isAuthorized = NO;
 
 void verifyKey(NSString *inputKey);
+void showFloatingButton();
+void toggleCheatMenu();
 
 @interface LoginManager : NSObject <UITextFieldDelegate>
 + (instancetype)sharedInstance;
@@ -90,11 +94,14 @@ void verifyKey(NSString *inputKey) {
                 overlayWindow = nil;
                 
                 UIViewController *topVC = [UIApplication sharedApplication].delegate.window.rootViewController;
-                UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Başarılı" message:@"Lisans onaylandı! Oyun açılıyor." preferredStyle:UIAlertControllerStyleAlert];
+                UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Başarılı" message:@"Lisans onaylandı! Menü aktifleşti." preferredStyle:UIAlertControllerStyleAlert];
                 [topVC presentViewController:alert animated:YES completion:nil];
                 dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
                     [alert dismissViewControllerAnimated:YES completion:nil];
                 });
+                
+                // Key uğurla keçildikdən sonra qara şəffaf yuvarlaq düyməni göstər
+                showFloatingButton();
             });
         }
     }
@@ -105,6 +112,144 @@ void handleTimeout() {
         abort();
     }
 }
+
+// Qara şəffaf yuvarlaq düymə (Floating Button)
+void showFloatingButton() {
+    if (floatingWindow) return;
+
+    UIWindowScene *scene = nil;
+    for (UIScene *s in [UIApplication sharedApplication].connectedScenes) {
+        if ([s isKindOfClass:[UIWindowScene class]]) {
+            scene = (UIWindowScene *)s;
+            break;
+        }
+    }
+
+    if (@available(iOS 13.0, *)) {
+        if (scene) {
+            floatingWindow = [[UIWindow alloc] initWithWindowScene:scene];
+        } else {
+            floatingWindow = [[UIWindow alloc] initWithFrame:CGRectMake(50, 100, 55, 55)];
+        }
+    } else {
+        floatingWindow = [[UIWindow alloc] initWithFrame:CGRectMake(50, 100, 55, 55)];
+    }
+
+    floatingWindow.windowLevel = UIWindowLevelAlert + 2000;
+    floatingWindow.backgroundColor = [UIColor clearColor];
+    
+    UIViewController *vc = [[UIViewController alloc] init];
+    floatingWindow.rootViewController = vc;
+    [floatingWindow makeKeyAndVisible];
+
+    UIButton *floatBtn = [UIButton buttonWithType:UIButtonTypeCustom];
+    floatBtn.frame = CGRectMake(0, 0, 55, 55);
+    floatBtn.backgroundColor = [UIColor colorWithRed:0.0 green:0.0 blue:0.0 alpha:0.65]; // Qara şəffaf
+    floatBtn.layer.cornerRadius = 27.5; // Yuvarlaq (Radius = width / 2)
+    floatBtn.layer.borderWidth = 1.5;
+    floatBtn.layer.borderColor = [UIColor colorWithWhite:1.0 alpha:0.4].CGColor;
+    
+    // Düymənin içərisinə ikon və ya kiçik simvol verə bilərsən
+    [floatBtn setTitle:@"PUBG" forState:UIControlStateNormal];
+    [floatBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+    floatBtn.titleLabel.font = [UIFont boldSystemFontOfSize:11];
+    
+    [floatBtn addTarget:nil action:@selector(floatBtnTapped) forControlEvents:UIControlEventTouchUpInside];
+    
+    // Düyməni ekranda sürükləmək (Drag/Pan) üçün jest əlavə edirik
+    UIPanGestureRecognizer *pan = [[UIPanGestureRecognizer alloc] initWithTarget:nil action:@selector(floatBtnDragged:)];
+    [floatBtn addGestureRecognizer:pan];
+    
+    [vc.view addSubview:floatBtn];
+}
+
+// Düyməyə basıldıqda menyunu aç/bağla
+@interface FloatingHelper : NSObject
+@end
+@implementation FloatingHelper
++ (void)floatBtnTapped {
+    toggleCheatMenu();
+}
++ (void)floatBtnDragged:(UIPanGestureRecognizer *)pan {
+    UIView *btn = pan.view;
+    CGPoint translation = [pan translationInView:btn.superview];
+    CGPoint center = CGPointMake(btn.center.x + translation.x, btn.center.y + translation.y);
+    
+    // Ekran sərhədlərindən çıxmasının qarşısını alaq
+    CGFloat screenW = [UIScreen mainScreen].bounds.size.width;
+    CGFloat screenH = [UIScreen mainScreen].bounds.size.height;
+    center.x = MAX(30, MIN(screenW - 30, center.x));
+    center.y = MAX(40, MIN(screenH - 40, center.y));
+    
+    btn.center = center;
+    [pan setTranslation:CGPointZero inView:btn.superview];
+}
+@end
+
+// Əsas Hiylə Menyusu (Cheat Menu Paneli)
+void toggleCheatMenu() {
+    if (cheatMenuWindow) {
+        cheatMenuWindow.hidden = !cheatMenuWindow.hidden;
+        return;
+    }
+
+    UIWindowScene *scene = nil;
+    for (UIScene *s in [UIApplication sharedApplication].connectedScenes) {
+        if ([s isKindOfClass:[UIWindowScene class]]) {
+            scene = (UIWindowScene *)s;
+            break;
+        }
+    }
+
+    if (@available(iOS 13.0, *)) {
+        if (scene) {
+            cheatMenuWindow = [[UIWindow alloc] initWithWindowScene:scene];
+        } else {
+            cheatMenuWindow = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
+        }
+    } else {
+        cheatMenuWindow = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
+    }
+
+    cheatMenuWindow.windowLevel = UIWindowLevelAlert + 1500;
+    cheatMenuWindow.backgroundColor = [UIColor clearColor];
+    
+    UIViewController *vc = [[UIViewController alloc] init];
+    cheatMenuWindow.rootViewController = vc;
+    [cheatMenuWindow makeKeyAndVisible];
+
+    // Menyu qutusu
+    UIView *menuPanel = [[UIView alloc] initWithFrame:CGRectMake(50, 80, [UIScreen mainScreen].bounds.size.width - 100, 300)];
+    menuPanel.backgroundColor = [UIColor colorWithRed:0.08 green:0.08 blue:0.1 alpha:0.95];
+    menuPanel.layer.cornerRadius = 16;
+    menuPanel.layer.borderWidth = 1.2;
+    menuPanel.layer.borderColor = [UIColor colorWithRed:0.2 green:0.6 blue:1.0 alpha:0.8].CGColor;
+    [vc.view addSubview:menuPanel];
+
+    UILabel *menuTitle = [[UILabel alloc] initWithFrame:CGRectMake(20, 15, menuPanel.frame.size.width - 40, 25)];
+    menuTitle.text = @"PUBG Ultimate Menu";
+    menuTitle.textColor = [UIColor whiteColor];
+    menuTitle.font = [UIFont boldSystemFontOfSize:18];
+    menuTitle.textAlignment = NSTextAlignmentCenter;
+    [menuPanel addSubview:menuTitle];
+
+    // Bağlamaq (Close) düyməsi
+    UIButton *closeBtn = [UIButton buttonWithType:UIButtonTypeSystem];
+    closeBtn.frame = CGRectMake(menuPanel.frame.size.width - 50, 12, 35, 30);
+    [closeBtn setTitle:@"X" forState:UIControlStateNormal];
+    [closeBtn setTitleColor:[UIColor redColor] forState:UIControlStateNormal];
+    closeBtn.titleLabel.font = [UIFont boldSystemFontOfSize:16];
+    [closeBtn addTarget:nil action:@selector(closeMenuTapped) forControlEvents:UIControlEventTouchUpInside];
+    [menuPanel addSubview:closeBtn];
+}
+
+@interface MenuHelper : NSObject
+@end
+@implementation MenuHelper
++ (void)closeMenuTapped {
+    cheatMenuWindow.hidden = YES;
+}
+@end
 
 void showLoginMenu() {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
@@ -181,7 +326,7 @@ void showLoginMenu() {
         loginBtn.layer.cornerRadius = 8;
         loginBtn.layer.borderWidth = 1;
         loginBtn.layer.borderColor = [UIColor colorWithWhite:0.3 alpha:1.0].CGColor;
-        loginBtn.titleLabel.font = [UIFont boldSystemFontOfSize:15];
+        titleLabel.font = [UIFont boldSystemFontOfSize:15];
         [loginBtn addTarget:[LoginManager sharedInstance] action:@selector(loginTapped) forControlEvents:UIControlEventTouchUpInside];
         [panel addSubview:loginBtn];
 
