@@ -12,12 +12,11 @@ extern bool MenDeal;
 
 @implementation CustomMTKView
 - (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
-    UIView *hitView = [super hitTest:point withEvent:event];
-    // Əgər menyu bağlıdırsa və toxunulan yer birbaşa mtkview-dürsə, toxunuşu oyuna buraxırıq
-    if (!MenDeal && hitView == self) {
+    // Əgər menyu bağlıdırsa, bütün toxunuşları birbaşa arxadakı oyuna ötürürük (heç nəyi bloklamır)
+    if (!MenDeal) {
         return nil;
     }
-    return hitView;
+    return [super hitTest:point withEvent:event];
 }
 @end
 
@@ -71,9 +70,9 @@ extern bool MenDeal;
     
     [mtkView setUserInteractionEnabled:YES];
     
-    // Yuxarı sol küncdə aydın görünən yaşıl haşiyəli MENU düyməsi
+    // Yuxarı sol küncdə menyunu açmaq üçün həmişə işləyən düymə
     self.menuButton = [UIButton buttonWithType:UIButtonTypeCustom];
-    self.menuButton.frame = CGRectMake(20, 100, 55, 55);
+    self.menuButton.frame = CGRectMake(20, 50, 55, 55);
     self.menuButton.backgroundColor = [UIColor colorWithRed:0.1f green:0.1f blue:0.1f alpha:0.9f];
     self.menuButton.layer.cornerRadius = 27.5f;
     self.menuButton.layer.borderWidth = 2.0f;
@@ -83,11 +82,14 @@ extern bool MenDeal;
     self.menuButton.titleLabel.font = [UIFont boldSystemFontOfSize:12];
     [self.menuButton addTarget:self action:@selector(toggleMenu) forControlEvents:UIControlEventTouchUpInside];
     
+    // Düymənin həmişə toxunula bilməsi üçün ayrıca pəncərəyə və ya birbaşa görünüşə əlavə edirik
     [self.view addSubview:self.menuButton];
 }
 
 - (void)toggleMenu {
     MenDeal = !MenDeal;
+    // Menyu açıldıqda toxunuşları aktivləşdiririk, bağlananda sərbəst buraxırıq
+    self.customView.userInteractionEnabled = MenDeal;
 }
 
 - (void)updateIOWithTouchEvent:(UIEvent *)event
@@ -149,6 +151,7 @@ extern bool MenDeal;
                 
                 if (ImGui::Button("Close Menu", ImVec2(120, 30))) {
                     MenDeal = false;
+                    self.customView.userInteractionEnabled = NO;
                 }
                 
                 ImGui::End();  
