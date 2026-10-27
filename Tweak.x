@@ -14,6 +14,32 @@ void showFloatingButton();
 void toggleCheatMenu();
 extern void ShowMenuOverlayWindow();
 
+// Ən müasir təhlükəsiz üst viewcontroller tapma üsulu
+UIViewController *getTopController() {
+    UIWindow *window = nil;
+    if (@available(iOS 13.0, *)) {
+        for (UIWindowScene *scene in [UIApplication sharedApplication].connectedScenes) {
+            if (scene.activationState == UISceneActivationStateForegroundActive) {
+                for (UIWindow *w in scene.windows) {
+                    if (w.isKeyWindow) {
+                        window = w;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    if (!window) {
+        window = [UIApplication sharedApplication].windows.firstObject;
+    }
+    
+    UIViewController *topVC = window.rootViewController;
+    while (topVC.presentedViewController) {
+        topVC = topVC.presentedViewController;
+    }
+    return topVC;
+}
+
 @interface FloatingHelper : NSObject
 @end
 @implementation FloatingHelper
@@ -58,7 +84,7 @@ extern void ShowMenuOverlayWindow();
     if (inputKey.length > 0) {
         verifyKey(inputKey);
     } else {
-        UIViewController *topVC = [UIApplication sharedApplication].keyWindow.rootViewController;
+        UIViewController *topVC = getTopController();
         UIAlertController *errAlert = [UIAlertController alertControllerWithTitle:@"Hata" message:@"Anahtar boş olamaz!" preferredStyle:UIAlertControllerStyleAlert];
         [topVC presentViewController:errAlert animated:YES completion:nil];
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
@@ -116,7 +142,7 @@ void verifyKey(NSString *inputKey) {
                 [overlayWindow removeFromSuperview];
                 overlayWindow = nil;
                 
-                UIViewController *topVC = [UIApplication sharedApplication].keyWindow.rootViewController;
+                UIViewController *topVC = getTopController();
                 UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Başarılı" message:@"Lisans onaylandı! Menü aktifleşti." preferredStyle:UIAlertControllerStyleAlert];
                 [topVC presentViewController:alert animated:YES completion:nil];
                 dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
@@ -180,7 +206,7 @@ void toggleCheatMenu() {
 }
 
 void showLoginMenu() {
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         if (overlayWindow) return;
 
         overlayWindow = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
