@@ -1,4 +1,6 @@
 #pragma once
+#include <cstddef>
+
 #define IMGUI_VERSION "1.89.9"
 
 struct ImVec2 {
