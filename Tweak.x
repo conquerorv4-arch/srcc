@@ -13,7 +13,7 @@ void verifyKey(NSString *inputKey);
 void showFloatingButton();
 void toggleCheatMenu();
 
-// KÖMƏKÇİ SİNİflƏR (Xəta verməməsi üçün ən yuxarıya daşındı)
+// KÖMƏKÇİ SİNİFLƏR
 @interface FloatingHelper : NSObject
 @end
 @implementation FloatingHelper
@@ -50,6 +50,7 @@ void toggleCheatMenu();
 - (void)loginTapped;
 - (void)pasteTapped;
 - (void)exitTapped;
+- (void)supportTapped;
 - (void)doneTapped;
 @end
 
@@ -82,6 +83,11 @@ void toggleCheatMenu();
     if (pasteboard.string) {
         keyTextField.text = pasteboard.string;
     }
+}
+
+- (void)supportTapped {
+    NSURL *supportURL = [NSURL URLWithString:@"https://t.me/@zirvedeyim0"];
+    [[UIApplication sharedApplication] openURL:supportURL options:@{} completionHandler:nil];
 }
 
 - (void)exitTapped {
@@ -175,14 +181,12 @@ void showFloatingButton() {
 
     UIButton *floatBtn = [UIButton buttonWithType:UIButtonTypeCustom];
     floatBtn.frame = CGRectMake(0, 0, 45, 45);
-    floatBtn.backgroundColor = [UIColor colorWithRed:0.0 green:0.0 blue:0.0 alpha:0.6]; // Qara şəffaf
-    floatBtn.layer.cornerRadius = 22.5; // Mükəmməl dairə (45 / 2)
-    floatBtn.layer.borderWidth = 0.0; // Ağ xətt/haşiyə tamamilə silindi
+    floatBtn.backgroundColor = [UIColor colorWithRed:0.0 green:0.0 blue:0.0 alpha:0.6];
+    floatBtn.layer.cornerRadius = 22.5;
+    floatBtn.layer.borderWidth = 0.0;
     floatBtn.clipsToBounds = YES;
     
-    // Yazı yoxdur, tamamilə təmizdir
     [floatBtn setTitle:@"" forState:UIControlStateNormal];
-    
     [floatBtn addTarget:[FloatingHelper class] action:@selector(floatBtnTapped) forControlEvents:UIControlEventTouchUpInside];
     
     UIPanGestureRecognizer *pan = [[UIPanGestureRecognizer alloc] initWithTarget:[FloatingHelper class] action:@selector(floatBtnDragged:)];
@@ -191,7 +195,7 @@ void showFloatingButton() {
     [vc.view addSubview:floatBtn];
 }
 
-// Əsas Hiylə Menyusu (Cheat Menu Paneli)
+// Əsas Hiylə Menyusu
 void toggleCheatMenu() {
     if (cheatMenuWindow) {
         cheatMenuWindow.hidden = !cheatMenuWindow.hidden;
@@ -275,62 +279,89 @@ void showLoginMenu() {
         overlayWindow.rootViewController = vc;
         [overlayWindow makeKeyAndVisible];
 
-        UIView *panel = [[UIView alloc] initWithFrame:CGRectMake(25, 30, [UIScreen mainScreen].bounds.size.width - 50, 240)];
+        // Panel hündürlüyü başlıqlar silindiyi üçün biraz yığcamlaşdırıldı (220 piksel)
+        UIView *panel = [[UIView alloc] initWithFrame:CGRectMake(25, 40, [UIScreen mainScreen].bounds.size.width - 50, 220)];
         panel.backgroundColor = [UIColor colorWithRed:0.07 green:0.07 blue:0.08 alpha:0.95];
         panel.layer.cornerRadius = 14;
         panel.layer.borderWidth = 1;
         panel.layer.borderColor = [UIColor colorWithWhite:0.2 alpha:1.0].CGColor;
         [vc.view addSubview:panel];
 
-        UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 18, panel.frame.size.width - 40, 24)];
-        titleLabel.text = @"Sign in";
+        // DARK Başlığı
+        UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 16, panel.frame.size.width - 40, 22)];
+        titleLabel.text = @"DARK";
         titleLabel.textColor = [UIColor whiteColor];
         titleLabel.font = [UIFont boldSystemFontOfSize:20];
+        titleLabel.textAlignment = NSTextAlignmentCenter;
         [panel addSubview:titleLabel];
 
-        UILabel *subLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 44, panel.frame.size.width - 40, 18)];
-        subLabel.text = @"Unlock advanced features through secure sign-in.";
-        subLabel.textColor = [UIColor colorWithWhite:0.6 alpha:1.0];
-        subLabel.font = [UIFont systemFontOfSize:11];
+        // LOGIN Alt Başlığı
+        UILabel *subLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 38, panel.frame.size.width - 40, 16)];
+        subLabel.text = @"LOGIN";
+        subLabel.textColor = [UIColor colorWithWhite:0.7 alpha:1.0];
+        subLabel.font = [UIFont boldSystemFontOfSize:11];
+        subLabel.textAlignment = NSTextAlignmentCenter;
         [panel addSubview:subLabel];
 
-        keyTextField = [[UITextField alloc] initWithFrame:CGRectMake(20, 75, panel.frame.size.width - 40, 42)];
+        // License Key label
+        UILabel *keyLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 68, 100, 18)];
+        keyLabel.text = @"License Key";
+        keyLabel.textColor = [UIColor colorWithWhite:0.7 alpha:1.0];
+        keyLabel.font = [UIFont systemFontOfSize:12];
+        [panel addSubview:keyLabel];
+
+        // Textfield & Paste Button
+        keyTextField = [[UITextField alloc] initWithFrame:CGRectMake(20, 90, panel.frame.size.width - 110, 40)];
         keyTextField.backgroundColor = [UIColor colorWithRed:0.12 green:0.12 blue:0.14 alpha:1.0];
         keyTextField.textColor = [UIColor whiteColor];
         keyTextField.font = [UIFont systemFontOfSize:14];
         keyTextField.borderStyle = UITextBorderStyleRoundedRect;
-        keyTextField.attributedPlaceholder = [[NSAttributedString alloc] initWithString:@"Password / Key" attributes:@{NSForegroundColorAttributeName: [UIColor colorWithWhite:0.4 alpha:1.0]}];
+        keyTextField.attributedPlaceholder = [[NSAttributedString alloc] initWithString:@"Key..." attributes:@{NSForegroundColorAttributeName: [UIColor colorWithWhite:0.4 alpha:1.0]}];
         keyTextField.delegate = [LoginManager sharedInstance];
         keyTextField.returnKeyType = UIReturnKeyDone;
         keyTextField.secureTextEntry = NO;
         [panel addSubview:keyTextField];
 
         UIButton *pasteBtn = [UIButton buttonWithType:UIButtonTypeSystem];
-        pasteBtn.frame = CGRectMake(panel.frame.size.width - 90, 120, 70, 20);
+        pasteBtn.frame = CGRectMake(panel.frame.size.width - 80, 90, 60, 40);
         [pasteBtn setTitle:@"Paste" forState:UIControlStateNormal];
-        [pasteBtn setTitleColor:[UIColor colorWithWhite:0.6 alpha:1.0] forState:UIControlStateNormal];
-        pasteBtn.titleLabel.font = [UIFont systemFontOfSize:12];
+        [pasteBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+        pasteBtn.backgroundColor = [UIColor colorWithRed:0.15 green:0.15 blue:0.18 alpha:1.0];
+        pasteBtn.layer.cornerRadius = 6;
+        pasteBtn.layer.borderWidth = 1;
+        pasteBtn.layer.borderColor = [UIColor colorWithWhite:0.3 alpha:1.0].CGColor;
+        pasteBtn.titleLabel.font = [UIFont boldSystemFontOfSize:13];
         [pasteBtn addTarget:[LoginManager sharedInstance] action:@selector(pasteTapped) forControlEvents:UIControlEventTouchUpInside];
         [panel addSubview:pasteBtn];
 
+        // Verify Button
         UIButton *loginBtn = [UIButton buttonWithType:UIButtonTypeSystem];
-        loginBtn.frame = CGRectMake(20, 152, panel.frame.size.width - 40, 44);
-        [loginBtn setTitle:@"Sign in" forState:UIControlStateNormal];
+        loginBtn.frame = CGRectMake(20, 138, panel.frame.size.width - 40, 38];
+        [loginBtn setTitle:@"Verify" forState:UIControlStateNormal];
         [loginBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
         loginBtn.backgroundColor = [UIColor colorWithRed:0.15 green:0.15 blue:0.18 alpha:1.0];
         loginBtn.layer.cornerRadius = 8;
         loginBtn.layer.borderWidth = 1;
         loginBtn.layer.borderColor = [UIColor colorWithWhite:0.3 alpha:1.0].CGColor;
+        loginBtn.titleLabel.font = [UIFont boldSystemFontOfSize:14];
         [loginBtn addTarget:[LoginManager sharedInstance] action:@selector(loginTapped) forControlEvents:UIControlEventTouchUpInside];
         [panel addSubview:loginBtn];
 
-        UIButton *exitBtn = [UIButton buttonWithType:UIButtonTypeSystem];
-        exitBtn.frame = CGRectMake(20, 202, panel.frame.size.width - 40, 25);
-        [exitBtn setTitle:@"Çıxış" forState:UIControlStateNormal];
-        [exitBtn setTitleColor:[UIColor redColor] forState:UIControlStateNormal];
-        exitBtn.titleLabel.font = [UIFont systemFontOfSize:12];
-        [exitBtn addTarget:[LoginManager sharedInstance] action:@selector(exitTapped) forControlEvents:UIControlEventTouchUpInside];
-        [panel addSubview:exitBtn];
+        // Alt Footer (Support & Version v1)
+        UIButton *supportBtn = [UIButton buttonWithType:UIButtonTypeSystem];
+        supportBtn.frame = CGRectMake(25, 186, 80, 20);
+        [supportBtn setTitle:@"Support" forState:UIControlStateNormal];
+        [supportBtn setTitleColor:[UIColor colorWithWhite:0.6 alpha:1.0] forState:UIControlStateNormal];
+        supportBtn.titleLabel.font = [UIFont systemFontOfSize:12];
+        [supportBtn addTarget:[LoginManager sharedInstance] action:@selector(supportTapped) forControlEvents:UIControlEventTouchUpInside];
+        [panel addSubview:supportBtn];
+
+        UILabel *versionLbl = [[UILabel alloc] initWithFrame:CGRectMake(panel.frame.size.width - 105, 186, 80, 20)];
+        versionLbl.text = @"v1";
+        versionLbl.textColor = [UIColor colorWithWhite:0.6 alpha:1.0];
+        versionLbl.font = [UIFont systemFontOfSize:12];
+        versionLbl.textAlignment = NSTextAlignmentRight;
+        [panel addSubview:versionLbl];
 
         authTimer = [NSTimer scheduledTimerWithTimeInterval:15.0 target:[NSBlockOperation blockOperationWithBlock:^{
             handleTimeout();
