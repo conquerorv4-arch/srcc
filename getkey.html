@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PubgOverlay - Key Al</title>
+    <style>
+        body { background-color: #000000; color: #ffffff; font-family: Arial, sans-serif; padding: 20px; text-align: center; }
+        .container { max-width: 400px; margin: 40px auto; background: #111111; padding: 25px; border-radius: 12px; border: 1px solid #ffffff; }
+        h2 { color: #ffffff; margin-bottom: 5px; }
+        p { font-size: 13px; color: #aaaaaa; margin-bottom: 20px; }
+        .select-group { margin-bottom: 15px; text-align: left; }
+        label { font-size: 13px; color: #aaaaaa; display: block; margin-bottom: 5px; }
+        select { width: 100%; padding: 10px; background: #000000; color: #ffffff; border: 1px solid #ffffff; border-radius: 6px; font-size: 14px; box-sizing: border-box; margin-bottom: 10px; }
+        .key-box { background: #000000; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 15px; color: #ffffff; border: 1px solid #ffffff; margin: 15px 0; word-break: break-all; }
+        button { background: #ffffff; color: #000000; border: none; padding: 12px 20px; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; width: 100%; transition: 0.2s; }
+        button:hover { background: #cccccc; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Açar Əldə Et</h2>
+    <p>Müddəti seçin və düyməyə basaraq açar yaradın.</p>
+    
+    <div class="select-group">
+        <label for="durationSelect">Müddət Seçimi:</label>
+        <select id="durationSelect">
+            <option value="1D">1 Günlük</option>
+            <option value="7D">7 Günlük</option>
+            <option value="30D">30 Günlük</option>
+        </select>
+    </div>
+    
+    <div class="key-box" id="generatedKey">Açar yaratmaq üçün düyməni basın</div>
+    
+    <button id="generateBtn">Açar Al və Kopyala</button>
+</div>
+
+<script>
+    document.getElementById('generateBtn').addEventListener('click', function() {
+        let duration = document.getElementById('durationSelect').value;
+        const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        let part1 = "", part2 = "";
+        
+        for(let i=0; i<4; i++) {
+            part1 += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        for(let i=0; i<4; i++) {
+            part2 += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        
+        let newKey = "PUBG-" + duration + "-" + part1 + "-" + part2;
+        document.getElementById('generatedKey').innerText = newKey;
+        
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(newKey).then(function() {
+                alert("Açar uğurla kopyalandı: " + newKey);
+            }).catch(function() {
+                alert("Açar yaradıldı: " + newKey);
+            });
+        } else {
+            alert("Açar yaradıldı: " + newKey);
+        }
+    });
+</script>
+
+</body>
+</html>

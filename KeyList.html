@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PubgOverlay - Key Siyahısı</title>
+    <style>
+        body { background-color: #0d1117; color: #c9d1d9; font-family: Arial, sans-serif; padding: 20px; text-align: center; }
+        .container { max-width: 400px; margin: 0 auto; background: #161b22; padding: 20px; border-radius: 12px; border: 1px solid #30363d; }
+        h2 { color: #58a6ff; margin-bottom: 5px; }
+        .count { font-size: 14px; color: #8b949e; margin-bottom: 20px; }
+        ul { list-style: none; padding: 0; text-align: left; }
+        li { background: #21262d; margin: 8px 0; padding: 10px 12px; border-radius: 6px; font-family: monospace; border: 1px solid #30363d; word-break: break-all; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Açar Siyahısı</h2>
+    <div class="count" id="keyCount">Yüklənir...</div>
+    <ul id="keyList"></ul>
+</div>
+
+<script>
+    async function loadKeys() {
+        try {
+            let response = await fetch('https://raw.githubusercontent.com/conquerorv4-arch/srcc/main/keylist.json');
+            let data = await response.json();
+            let keys = data.keys || [];
+            
+            document.getElementById('keyCount').innerText = `Ümumi açar sayı: ${keys.length}`;
+            
+            let listHTML = '';
+            keys.forEach(key => {
+                listHTML += `<li>${key}</li>`;
+            });
+            document.getElementById('keyCount').innerText = `Ümumi açar sayı: ${keys.length}`;
+            document.getElementById('keyList').innerHTML = listHTML;
+        } catch (error) {
+            document.getElementById('keyCount').innerText = 'Xəta: Açar siyahısı yüklənmədi!';
+        }
+    }
+    loadKeys();
+</script>
+
+</body>
+</html>
