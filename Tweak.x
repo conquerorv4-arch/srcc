@@ -129,10 +129,10 @@ void showFloatingButton() {
         if (scene) {
             floatingWindow = [[UIWindow alloc] initWithWindowScene:scene];
         } else {
-            floatingWindow = [[UIWindow alloc] initWithFrame:CGRectMake(50, 100, 55, 55)];
+            floatingWindow = [[UIWindow alloc] initWithFrame:CGRectMake(50, 100, 45, 45)];
         }
     } else {
-        floatingWindow = [[UIWindow alloc] initWithFrame:CGRectMake(50, 100, 55, 55)];
+        floatingWindow = [[UIWindow alloc] initWithFrame:CGRectMake(50, 100, 45, 45)];
     }
 
     floatingWindow.windowLevel = UIWindowLevelAlert + 2000;
@@ -143,16 +143,14 @@ void showFloatingButton() {
     [floatingWindow makeKeyAndVisible];
 
     UIButton *floatBtn = [UIButton buttonWithType:UIButtonTypeCustom];
-    floatBtn.frame = CGRectMake(0, 0, 55, 55);
-    floatBtn.backgroundColor = [UIColor colorWithRed:0.0 green:0.0 blue:0.0 alpha:0.65]; // Qara şəffaf
-    floatBtn.layer.cornerRadius = 27.5; // Yuvarlaq (Radius = width / 2)
-    floatBtn.layer.borderWidth = 1.5;
-    floatBtn.layer.borderColor = [UIColor colorWithWhite:1.0 alpha:0.4].CGColor;
+    floatBtn.frame = CGRectMake(0, 0, 45, 45);
+    floatBtn.backgroundColor = [UIColor colorWithRed:0.0 green:0.0 blue:0.0 alpha:0.6]; // Qara şəffaf
+    floatBtn.layer.cornerRadius = 22.5; // Mükəmməl dairə (45 / 2)
+    floatBtn.layer.borderWidth = 0.0; // Ağ xətt/haşiyə tamamilə silindi
+    floatBtn.clipsToBounds = YES;
     
-    // Düymənin içərisinə ikon və ya kiçik simvol verə bilərsən
-    [floatBtn setTitle:@"PUBG" forState:UIControlStateNormal];
-    [floatBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-    floatBtn.titleLabel.font = [UIFont boldSystemFontOfSize:11];
+    // Yazı silindi (boş buraxıldı)
+    [floatBtn setTitle:@"" forState:UIControlStateNormal];
     
     [floatBtn addTarget:nil action:@selector(floatBtnTapped) forControlEvents:UIControlEventTouchUpInside];
     
@@ -163,7 +161,7 @@ void showFloatingButton() {
     [vc.view addSubview:floatBtn];
 }
 
-// Düyməyə basıldıqda menyunu aç/bağla
+// Düyməyə basıldıqda menyunu aç/bağla və sürüşdürmə funksiyası
 @interface FloatingHelper : NSObject
 @end
 @implementation FloatingHelper
@@ -178,8 +176,8 @@ void showFloatingButton() {
     // Ekran sərhədlərindən çıxmasının qarşısını alaq
     CGFloat screenW = [UIScreen mainScreen].bounds.size.width;
     CGFloat screenH = [UIScreen mainScreen].bounds.size.height;
-    center.x = MAX(30, MIN(screenW - 30, center.x));
-    center.y = MAX(40, MIN(screenH - 40, center.y));
+    center.x = MAX(25, MIN(screenW - 25, center.x));
+    center.y = MAX(25, MIN(screenH - 25, center.y));
     
     btn.center = center;
     [pan setTranslation:CGPointZero inView:btn.superview];
@@ -326,7 +324,6 @@ void showLoginMenu() {
         loginBtn.layer.cornerRadius = 8;
         loginBtn.layer.borderWidth = 1;
         loginBtn.layer.borderColor = [UIColor colorWithWhite:0.3 alpha:1.0].CGColor;
-        titleLabel.font = [UIFont boldSystemFontOfSize:15];
         [loginBtn addTarget:[LoginManager sharedInstance] action:@selector(loginTapped) forControlEvents:UIControlEventTouchUpInside];
         [panel addSubview:loginBtn];
 
