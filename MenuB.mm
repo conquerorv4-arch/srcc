@@ -7,10 +7,25 @@
 
 extern bool MenDeal;
 
+@interface CustomMTKView : MTKView
+@end
+
+@implementation CustomMTKView
+- (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
+    UIView *hitView = [super hitTest:point withEvent:event];
+    // Əgər menyu bağlıdırsa və toxunulan yer birbaşa mtkview-dürsə, toxunuşu oyuna buraxırıq
+    if (!MenDeal && hitView == self) {
+        return nil;
+    }
+    return hitView;
+}
+@end
+
 @interface ImGuiDrawView () <MTKViewDelegate>
 @property (nonatomic, strong) id <MTLDevice> device;
 @property (nonatomic, strong) id <MTLCommandQueue> commandQueue;
 @property (nonatomic, strong) UIButton *menuButton;
+@property (nonatomic, strong) CustomMTKView *customView;
 @end
 
 @implementation ImGuiDrawView
@@ -38,48 +53,31 @@ extern bool MenDeal;
     return self;
 }
 
-- (MTKView *)mtkView { return (MTKView *)self.view; }
-
 - (void)loadView
 {
-    CGFloat w = [UIApplication sharedApplication].windows[0].rootViewController.view.frame.size.width;
-    CGFloat h = [UIApplication sharedApplication].windows[0].rootViewController.view.frame.size.width ? [UIApplication sharedApplication].windows[0].rootViewController.view.frame.size.height : 0;
-    self.view = [[MTKView alloc] initWithFrame:CGRectMake(0, 0, w, h)];
-}
-
-- (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
-    // Əgər düyməyə toxunulursa, toxunuşu birbaşa düyməyə veririk
-    CGPoint buttonPoint = [self.menuButton convertPoint:point fromView:self];
-    if ([self.menuButton pointInside:buttonPoint withEvent:event]) {
-        return self.menuButton;
-    }
-    
-    // Menyu açıqdısa toxunuşları qəbul edirik
-    if (MenDeal) {
-        return [super hitTest:point withEvent:event];
-    }
-    
-    // Menyu bağlıdırsa, toxunuşları arxadakı oyuna ötürürük ki, oyun düymələri işləsin
-    return nil;
+    CGRect screenRect = [UIScreen mainScreen].bounds;
+    self.customView = [[CustomMTKView alloc] initWithFrame:screenRect];
+    self.view = self.customView;
 }
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    self.mtkView.device = self.device;
-    self.mtkView.delegate = self;
-    self.mtkView.clearColor = MTLClearColorMake(0, 0, 0, 0);
-    self.mtkView.backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0];
-    self.mtkView.clipsToBounds = YES;
+    CustomMTKView *mtkView = (CustomMTKView *)self.view;
+    mtkView.device = self.device;
+    mtkView.delegate = self;
+    mtkView.clearColor = MTLClearColorMake(0, 0, 0, 0);
+    mtkView.backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0];
+    mtkView.clipsToBounds = YES;
     
-    [self.mtkView setUserInteractionEnabled:YES];
+    [mtkView setUserInteractionEnabled:YES];
     
-    // Düyməni ekranın yuxarı sol hissəsində, heç bir oyun elementinə mane olmayacaq şəkildə yerləşdiririk
+    // Yuxarı sol küncdə aydın görünən yaşıl haşiyəli MENU düyməsi
     self.menuButton = [UIButton buttonWithType:UIButtonTypeCustom];
     self.menuButton.frame = CGRectMake(20, 100, 55, 55);
     self.menuButton.backgroundColor = [UIColor colorWithRed:0.1f green:0.1f blue:0.1f alpha:0.9f];
     self.menuButton.layer.cornerRadius = 27.5f;
     self.menuButton.layer.borderWidth = 2.0f;
-    self.menuButton.layer.borderColor = [UIColor greenColor].CGColor; // Yaşıl rəngdə aydın görünən haşiyə
+    self.menuButton.layer.borderColor = [UIColor greenColor].CGColor;
     [self.menuButton setTitle:@"MENU" forState:UIControlStateNormal];
     [self.menuButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
     self.menuButton.titleLabel.font = [UIFont boldSystemFontOfSize:12];
