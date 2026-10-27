@@ -5,11 +5,12 @@
 #import "imgui.h"
 #import "imgui_impl_metal.h"
 
-extern bool MenDeal; // Tweak.x-də təyin olunduğu üçün burada extern edirik
+extern bool MenDeal;
 
 @interface ImGuiDrawView () <MTKViewDelegate>
 @property (nonatomic, strong) id <MTLDevice> device;
 @property (nonatomic, strong) id <MTLCommandQueue> commandQueue;
+@property (nonatomic, strong) UIButton *menuButton;
 @end
 
 @implementation ImGuiDrawView
@@ -53,6 +54,27 @@ extern bool MenDeal; // Tweak.x-də təyin olunduğu üçün burada extern ediri
     self.mtkView.clearColor = MTLClearColorMake(0, 0, 0, 0);
     self.mtkView.backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0];
     self.mtkView.clipsToBounds = YES;
+    
+    // Həmişə toxunuşların işləməsi üçün YES edirik
+    [self.mtkView setUserInteractionEnabled:YES];
+    
+    // Üstə açılıb-bağlanmaq üçün toxunula bilən səliqəli düymə əlavə edirik
+    self.menuButton = [UIButton buttonWithType:UIButtonTypeCustom];
+    self.menuButton.frame = CGRectMake(30, 60, 45, 45);
+    self.menuButton.backgroundColor = [UIColor colorWithWhite:0.1f alpha:0.8f];
+    self.menuButton.layer.cornerRadius = 22.5f;
+    self.menuButton.layer.borderWidth = 1.5f;
+    self.menuButton.layer.borderColor = [UIColor whiteColor].CGColor;
+    [self.menuButton setTitle:@"MENU" forState:UIControlStateNormal];
+    [self.menuButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+    self.menuButton.titleLabel.font = [UIFont boldSystemFontOfSize:10];
+    [self.menuButton addTarget:self action:@selector(toggleMenu) forControlEvents:UIControlEventTouchUpInside];
+    
+    [self.view addSubview:self.menuButton];
+}
+
+- (void)toggleMenu {
+    MenDeal = !MenDeal;
 }
 
 - (void)updateIOWithTouchEvent:(UIEvent *)event
@@ -74,10 +96,18 @@ extern bool MenDeal; // Tweak.x-də təyin olunduğu üçün burada extern ediri
     io.MouseDown[0] = hasActiveTouch;
 }
 
-- (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event { [self updateIOWithTouchEvent:event]; }
-- (void)touchesMoved:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event { [self updateIOWithTouchEvent:event]; }
-- (void)touchesCancelled:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event { [self updateIOWithTouchEvent:event]; }
-- (void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event { [self updateIOWithTouchEvent:event]; }
+- (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event { 
+    if (MenDeal) [self updateIOWithTouchEvent:event]; 
+}
+- (void)touchesMoved:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event { 
+    if (MenDeal) [self updateIOWithTouchEvent:event]; 
+}
+- (void)touchesCancelled:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event { 
+    if (MenDeal) [self updateIOWithTouchEvent:event]; 
+}
+- (void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event { 
+    if (MenDeal) [self updateIOWithTouchEvent:event]; 
+}
 
 - (void)drawInMTKView:(MTKView*)view
 {
@@ -90,12 +120,11 @@ extern bool MenDeal; // Tweak.x-də təyin olunduğu üçün burada extern ediri
     io.DeltaTime = 1 / float(view.preferredFramesPerSecond ?: 60);
     
     id<MTLCommandBuffer> commandBuffer = [self.commandQueue commandBuffer];
-        
-    if (MenDeal == true) {
-        [self.mtkView setUserInteractionEnabled:YES];
-    } else {
-        [self.mtkView setUserInteractionEnabled:NO];
-    }
+    
+    // Menyu açıqdısa düyməni gizlədirik, bağlayanda göstəririk
+    dispatch_async(dispatch_get_main_queue(), ^{
+        self.menuButton.hidden = MenDeal;
+    });
 
     MTLRenderPassDescriptor* renderPassDescriptor = view.currentRenderPassDescriptor;
     if (renderPassDescriptor != nil)
