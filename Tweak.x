@@ -13,6 +13,38 @@ void verifyKey(NSString *inputKey);
 void showFloatingButton();
 void toggleCheatMenu();
 
+// KÖMƏKÇİ SİNİflƏR (Xəta verməməsi üçün ən yuxarıya daşındı)
+@interface FloatingHelper : NSObject
+@end
+@implementation FloatingHelper
++ (void)floatBtnTapped {
+    toggleCheatMenu();
+}
++ (void)floatBtnDragged:(UIPanGestureRecognizer *)pan {
+    UIView *btn = pan.view;
+    CGPoint translation = [pan translationInView:btn.superview];
+    CGPoint center = CGPointMake(btn.center.x + translation.x, btn.center.y + translation.y);
+    
+    CGFloat screenW = [UIScreen mainScreen].bounds.size.width;
+    CGFloat screenH = [UIScreen mainScreen].bounds.size.height;
+    center.x = MAX(25, MIN(screenW - 25, center.x));
+    center.y = MAX(25, MIN(screenH - 25, center.y));
+    
+    btn.center = center;
+    [pan setTranslation:CGPointZero inView:btn.superview];
+}
+@end
+
+@interface MenuHelper : NSObject
+@end
+@implementation MenuHelper
++ (void)closeMenuTapped {
+    if (cheatMenuWindow) {
+        cheatMenuWindow.hidden = YES;
+    }
+}
+@end
+
 @interface LoginManager : NSObject <UITextFieldDelegate>
 + (instancetype)sharedInstance;
 - (void)loginTapped;
@@ -151,37 +183,13 @@ void showFloatingButton() {
     // Yazı yoxdur, tamamilə təmizdir
     [floatBtn setTitle:@"" forState:UIControlStateNormal];
     
-    // Düyməyə basıldıqda menyunu açmaq üçün FloatingHelper bağlandı
     [floatBtn addTarget:[FloatingHelper class] action:@selector(floatBtnTapped) forControlEvents:UIControlEventTouchUpInside];
     
-    // Düyməni ekranda sürükləmək (Drag/Pan) üçün jest əlavə edilir
     UIPanGestureRecognizer *pan = [[UIPanGestureRecognizer alloc] initWithTarget:[FloatingHelper class] action:@selector(floatBtnDragged:)];
     [floatBtn addGestureRecognizer:pan];
     
     [vc.view addSubview:floatBtn];
 }
-
-// Düymə hərəkətləri və menyu açma funksiyası
-@interface FloatingHelper : NSObject
-@end
-@implementation FloatingHelper
-+ (void)floatBtnTapped {
-    toggleCheatMenu();
-}
-+ (void)floatBtnDragged:(UIPanGestureRecognizer *)pan {
-    UIView *btn = pan.view;
-    CGPoint translation = [pan translationInView:btn.superview];
-    CGPoint center = CGPointMake(btn.center.x + translation.x, btn.center.y + translation.y);
-    
-    CGFloat screenW = [UIScreen mainScreen].bounds.size.width;
-    CGFloat screenH = [UIScreen mainScreen].bounds.size.height;
-    center.x = MAX(25, MIN(screenW - 25, center.x));
-    center.y = MAX(25, MIN(screenH - 25, center.y));
-    
-    btn.center = center;
-    [pan setTranslation:CGPointZero inView:btn.superview];
-}
-@end
 
 // Əsas Hiylə Menyusu (Cheat Menu Paneli)
 void toggleCheatMenu() {
@@ -237,14 +245,6 @@ void toggleCheatMenu() {
     [closeBtn addTarget:[MenuHelper class] action:@selector(closeMenuTapped) forControlEvents:UIControlEventTouchUpInside];
     [menuPanel addSubview:closeBtn];
 }
-
-@interface MenuHelper : NSObject
-@end
-@implementation MenuHelper
-+ (void)closeMenuTapped {
-    cheatMenuWindow.hidden = YES;
-}
-@end
 
 void showLoginMenu() {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
