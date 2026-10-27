@@ -1,4 +1,3 @@
-
 #ifndef CustomStrcut_h
 #define CustomStrcut_h
 
@@ -550,5 +549,3 @@ MaterialStruct isMaterial(const char *name);
 MaterialStruct isBoxMaterial(int box_goods_id);
 
 #endif /* CustomStrcut_h */
-
-
