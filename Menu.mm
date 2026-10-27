@@ -1,7 +1,7 @@
 #import "菜单.h"
 #import "XORstring.h"
-#include "../Image/Icon.h"
-#import "../View/OverlayView.h"
+#include "Image/Icon.h"
+#import "View/OverlayView.h"
 #include "IconsFontAwesome6.h"
 #include <string>
 #include <algorithm>
@@ -12,9 +12,9 @@
 #import "XORstring.h"
 #include "ESP/mahoa.h"
 #include "sys/mman.h"
-#include "../ESP/Tools.h"
+#include "ESP/Tools.h"
 #import <AVFoundation/AVFoundation.h>
-#include "../JRMemory.framework/Headers/MemScan.h"
+
 #include <stdio.h>
 #include <stdint.h>
 #import <CoreTelephony/CTTelephonyNetworkInfo.h>
