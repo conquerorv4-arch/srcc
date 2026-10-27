@@ -1,7 +1,7 @@
 #import <Metal/Metal.h>
 #import <MetalKit/MetalKit.h>
 #import <Foundation/Foundation.h>
-#import "Project/Main/MenuB.h"
+#import "MenuB.h"
 #import "Project/ImGui/imgui.h"
 #import "Project/ImGui/imgui_impl_metal.h"
 #import "Project/Extra/ConfigMenu.h"
@@ -263,7 +263,7 @@ bool èç¹å¼å³ = NO;
 bool IsWarningBom=NO;
 bool IsDeadBox=NO;
 bool IsAirDrop=NO;
-bool MenDeal = true;
+bool MenDeal = false; // Menyunu əvvəlcə bağlayırıq ki, lisenziya təsdiqlənəndən sonra açısın
 int Tab = 0;
 int IsCheckAimbot = 0;
 extern int AlivePlayerNum, AliveTeamNum, PlayerNum, minutes, seconds, Kill;
@@ -359,7 +359,6 @@ void RenderBannerNotification() {
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
 
-    // Saf Ağ və Qara Rəng Stili
     ImGuiStyle& style = ImGui::GetStyle();
     style.Colors[ImGuiCol_WindowBg] = ImVec4(0.06f, 0.06f, 0.06f, 0.95f);
     style.Colors[ImGuiCol_ChildBg] = ImVec4(0.08f, 0.08f, 0.08f, 1.0f);
@@ -410,8 +409,6 @@ void RenderBannerNotification() {
     self.canRunAgain = YES;
 }
 
-#pragma mark - Interaction
-
 - (void)updateIOWithTouchEvent:(UIEvent *)event
 {
     UITouch *anyTouch = event.allTouches.anyObject;
@@ -435,8 +432,6 @@ void RenderBannerNotification() {
 - (void)touchesMoved:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event { [self updateIOWithTouchEvent:event]; }
 - (void)touchesCancelled:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event { [self updateIOWithTouchEvent:event]; }
 - (void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event { [self updateIOWithTouchEvent:event]; }
-
-#pragma mark - MTKViewDelegate
 
 - (void)drawInMTKView:(MTKView*)view
 {   
@@ -498,7 +493,6 @@ void RenderBannerNotification() {
             }
             ImGui::End();
 
-// Başlıq mətni "DARK IOS" olaraq dəyişdirildi
 NSString *aliasKey = @"DARK IOS";
 const char* ServerName = [aliasKey cStringUsingEncoding:NSUTF8StringEncoding];
 std::string str = ServerName;
