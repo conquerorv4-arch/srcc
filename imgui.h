@@ -1,22 +1,5 @@
 #pragma once
 #define IMGUI_VERSION "1.89.9"
-#define IMGUI_CHECKVERSION() ImGui::CheckVersion(IMGUI_VERSION, sizeof(ImGuiIO), sizeof(ImGuiStyle), sizeof(ImVec2), sizeof(ImVec4), sizeof(ImDrawVert), sizeof(ImDrawIdx))
-
-namespace ImGui {
-    bool CheckVersion(const char* version, size_t sz_io, size_t sz_style, size_t sz_vec2, size_t sz_vec4, size_t sz_vert, size_t sz_idx);
-    void CreateContext();
-    struct ImGuiIO& GetIO();
-    struct ImGuiStyle& GetStyle();
-    void NewFrame();
-    void Render();
-    struct ImDrawData* GetDrawData();
-    bool Begin(const char* name, bool* p_open = nullptr, int flags = 0);
-    void End();
-    void Text(const char* fmt, ...);
-    bool Button(const char* label, const ImVec2& size = ImVec2(0,0));
-    void Separator();
-    double GetTime();
-}
 
 struct ImVec2 {
     float x, y;
@@ -42,6 +25,30 @@ struct ImGuiStyle {
     ImVec4 Colors[55];
 };
 
+struct ImDrawData {};
+struct ImDrawVert {};
+typedef unsigned short ImDrawIdx;
+
+#define IMGUI_CHECKVERSION() ImGui::CheckVersion(IMGUI_VERSION, sizeof(ImGuiIO), sizeof(ImGuiStyle), sizeof(ImVec2), sizeof(ImVec4), sizeof(ImDrawVert), sizeof(ImDrawIdx))
+
+namespace ImGui {
+    inline bool CheckVersion(const char*, size_t, size_t, size_t, size_t, size_t, size_t) { return true; }
+    inline void CreateContext() {}
+    inline ImGuiIO& GetIO() { static ImGuiIO io; return io; }
+    inline ImGuiStyle& GetStyle() { static ImGuiStyle style; return style; }
+    inline void NewFrame() {}
+    inline void Render() {}
+    inline ImDrawData* GetDrawData() { static ImDrawData data; return &data; }
+    inline bool Begin(const char*, bool* = nullptr, int = 0) { return true; }
+    inline void End() {}
+    inline void Text(const char*, ...) {}
+    inline bool Button(const char*, const ImVec2& = ImVec2(0,0)) { return false; }
+    inline void Separator() {}
+    inline double GetTime() { return 0.0; }
+    inline void SetNextWindowPos(const ImVec2&, int = 0, const ImVec2& = ImVec2(0,0)) {}
+    inline void SetNextWindowSize(const ImVec2&, int = 0) {}
+}
+
 enum ImGuiCol_ {
     ImGuiCol_Text, ImGuiCol_WindowBg, ImGuiCol_ChildBg, ImGuiCol_Border, ImGuiCol_FrameBg
 };
@@ -52,4 +59,4 @@ enum ImGuiWindowFlags_ {
     ImGuiWindowFlags_NoResize = 1 << 6
 };
 
-#define ImGuiCond_FirstUseEver 1 << 3
+#define ImGuiCond_FirstUseEver (1 << 3)
