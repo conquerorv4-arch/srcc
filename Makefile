@@ -6,8 +6,8 @@ include $(THEOS)/makefiles/common.mk
 
 TWEAK_NAME = PubgOverlay
 
-PubgOverlay_FILES = Tweak.x MenuB.mm
-PubgOverlay_CFLAGS = -fobjc-arc -I. -IProject/ImGui
+PubgOverlay_FILES = Tweak.x MenuB.mm imgui.cpp imgui_impl_metal.mm
+PubgOverlay_CFLAGS = -fobjc-arc -I.
 
 include $(THEOS)/makefiles/tweak.mk
 include $(THEOS)/makefiles/package.mk
