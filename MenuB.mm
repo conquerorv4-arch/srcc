@@ -6,7 +6,7 @@
 #import "imgui.h"
 #import "imgui_impl_metal.h"
 
-bool MenDeal = false;
+extern bool MenDeal;
 
 @interface CustomMTKView : MTKView
 @end
@@ -23,7 +23,6 @@ bool MenDeal = false;
 @interface ImGuiDrawViewController : UIViewController <MTKViewDelegate>
 @property (nonatomic, strong) id <MTLDevice> device;
 @property (nonatomic, strong) id <MTLCommandQueue> commandQueue;
-@property (nonatomic, strong) UIButton *menuButton;
 @property (nonatomic, strong) CustomMTKView *customView;
 @end
 
@@ -62,25 +61,6 @@ bool MenDeal = false;
     mtkView.backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0];
     mtkView.clipsToBounds = YES;
     mtkView.userInteractionEnabled = YES;
-
-    // Yuxarı sol küncdə yaşıl haşiyəli MENU düyməsi
-    self.menuButton = [UIButton buttonWithType:UIButtonTypeCustom];
-    self.menuButton.frame = CGRectMake(20, 60, 55, 55);
-    self.menuButton.backgroundColor = [UIColor colorWithRed:0.1f green:0.1f blue:0.1f alpha:0.9f];
-    self.menuButton.layer.cornerRadius = 27.5f;
-    self.menuButton.layer.borderWidth = 2.0f;
-    self.menuButton.layer.borderColor = [UIColor greenColor].CGColor;
-    [self.menuButton setTitle:@"MENU" forState:UIControlStateNormal];
-    [self.menuButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-    self.menuButton.titleLabel.font = [UIFont boldSystemFontOfSize:12];
-    [self.menuButton addTarget:self action:@selector(toggleMenu) forControlEvents:UIControlEventTouchUpInside];
-    
-    [self.view addSubview:self.menuButton];
-}
-
-- (void)toggleMenu {
-    MenDeal = !MenDeal;
-    self.customView.userInteractionEnabled = MenDeal;
 }
 
 - (void)updateIOWithTouchEvent:(UIEvent *)event
@@ -130,6 +110,7 @@ bool MenDeal = false;
             
             CGSize screenSize = [UIScreen mainScreen].bounds.size;
             
+            // DARK IOS Menyu Pəncərəsi
             if (MenDeal == true)
             {            
                 ImGui::SetNextWindowPos(ImVec2(screenSize.width * 0.5f, screenSize.height * 0.5f), ImGuiCond_FirstUseEver, ImVec2(0.5f, 0.5f));
@@ -141,7 +122,6 @@ bool MenDeal = false;
                 
                 if (ImGui::Button("Close Menu", ImVec2(120, 30))) {
                     MenDeal = false;
-                    self.customView.userInteractionEnabled = NO;
                 }
                 
                 ImGui::End();  
@@ -163,16 +143,16 @@ bool MenDeal = false;
 
 @end
 
-static UIWindow *overlayWindow = nil;
+static UIWindow *menuOverlayWindow = nil;
 
-void ShowMenuWindow() {
+void ShowMenuOverlayWindow() {
     dispatch_async(dispatch_get_main_queue(), ^{
-        if (!overlayWindow) {
-            overlayWindow = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
-            overlayWindow.rootViewController = [[ImGuiDrawViewController alloc] init];
-            overlayWindow.windowLevel = UIWindowLevelAlert + 1;
-            overlayWindow.hidden = NO;
-            [overlayWindow makeKeyAndVisible];
+        if (!menuOverlayWindow) {
+            menuOverlayWindow = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
+            menuOverlayWindow.rootViewController = [[ImGuiDrawViewController alloc] init];
+            menuOverlayWindow.windowLevel = UIWindowLevelAlert + 500;
+            menuOverlayWindow.hidden = NO;
+            [menuOverlayWindow makeKeyAndVisible];
         }
     });
 }
