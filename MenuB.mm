@@ -110,7 +110,6 @@ extern bool MenDeal;
             
             CGSize screenSize = [UIScreen mainScreen].bounds.size;
             
-            // DARK IOS Menyu Pəncərəsi
             if (MenDeal == true)
             {            
                 ImGui::SetNextWindowPos(ImVec2(screenSize.width * 0.5f, screenSize.height * 0.5f), ImGuiCond_FirstUseEver, ImVec2(0.5f, 0.5f));
