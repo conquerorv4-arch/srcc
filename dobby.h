@@ -4,8 +4,8 @@
 // obfuscated interface
 #if 0
 #define DobbyBuildVersion c343f74888dffad84d9ad08d9c433456
-#define DobbyHook c8dc3ffa44f22dbd10ccae213dd8b1f8
-#define DobbyInstrument b71e27bca2c362de90c1034f19d839f9
+#define DobbyHook         c8dc3ffa44f22dbd10ccae213dd8b1f8
+#define DobbyInstrument   b71e27bca2c362de90c1034f19d839f9
 #endif
 
 #ifdef __cplusplus
@@ -15,24 +15,9 @@ extern "C" {
 #include <stdbool.h>
 #include <stdint.h>
 
-void log_set_level(int level);
-void log_switch_to_syslog();
-void log_switch_to_file(const char *path);
-
-typedef enum {
-  kMemoryOperationSuccess,
-  kMemoryOperationError,
-  kNotSupportAllocateExecutableMemory,
-  kNotEnough,
-  kNone
-} MemoryOperationError;
-
-#define PLATFORM_INTERFACE_CODE_PATCH_TOOL_H
-MemoryOperationError CodePatch(void *address, uint8_t *buffer, uint32_t buffer_size);
-
 typedef uintptr_t addr_t;
-typedef uint32_t addr32_t;
-typedef uint64_t addr64_t;
+typedef uint32_t  addr32_t;
+typedef uint64_t  addr64_t;
 
 #if defined(__arm64__) || defined(__aarch64__)
 
@@ -100,18 +85,13 @@ typedef struct _RegisterContext {
 } RegisterContext;
 #elif defined(_M_IX86) || defined(__i386__)
 typedef struct _RegisterContext {
-  uint32_t dummy_0;
-  uint32_t esp;
-
-  uint32_t dummy_1;
-  uint32_t flags;
-
   union {
     struct {
       uint32_t eax, ebx, ecx, edx, ebp, esp, edi, esi;
     } regs;
   } general;
 
+  uint32_t flags;
 } RegisterContext;
 #elif defined(_M_X64) || defined(__x86_64__)
 typedef struct _RegisterContext {
@@ -129,12 +109,19 @@ typedef struct _RegisterContext {
 } RegisterContext;
 #endif
 
-#define RT_FAILED -1
+#define RT_FAILED  -1
 #define RT_SUCCESS 0
 typedef enum _RetStatus { RS_FAILED = -1, RS_SUCCESS = 0 } RetStatus;
 
+typedef enum _PackageType {
+  kFunctionWrapper,
+  kFunctionInlineHook,
+  kDynamicBinaryInstrument
+} PackageType,
+    HookEntryType;
+
 typedef struct _HookEntryInfo {
-  int hook_id;
+  uintptr_t hook_id;
   union {
     void *target_address;
     void *function_address;
@@ -145,8 +132,8 @@ typedef struct _HookEntryInfo {
 // DobbyWrap <==> DobbyInstrument, so use DobbyInstrument instead of DobbyWrap
 #if 0
 // wrap function with pre_call and post_call
-typedef void (*PreCallTy)(RegisterContext *ctx, const HookEntryInfo *info);
-typedef void (*PostCallTy)(RegisterContext *ctx, const HookEntryInfo *info);
+typedef void (*PreCallTy)(RegisterContext *reg_ctx, const HookEntryInfo *info);
+typedef void (*PostCallTy)(RegisterContext *reg_ctx, const HookEntryInfo *info);
 int DobbyWrap(void *function_address, PreCallTy pre_call, PostCallTy post_call);
 #endif
 
@@ -154,13 +141,13 @@ int DobbyWrap(void *function_address, PreCallTy pre_call, PostCallTy post_call);
 const char *DobbyBuildVersion();
 
 // replace function
-int DobbyHook(void *address, void *replace_call, void **origin_call);
+int DobbyHook(void *function_address, void *replace_call, void **origin_call);
 
 // dynamic binary instrument for instruction
 // [!!! READ ME !!!]
 // for Arm64, can't access q8 - q31, unless you enable full floating-point register pack
-typedef void (*DBICallTy)(RegisterContext *ctx, const HookEntryInfo *info);
-int DobbyInstrument(void *address, DBICallTy dbi_call);
+typedef void (*DBICallTy)(RegisterContext *reg_ctx, const HookEntryInfo *info);
+int DobbyInstrument(void *instr_address, DBICallTy dbi_call);
 
 // destory and restore hook
 int DobbyDestroy(void *address);
@@ -168,15 +155,16 @@ int DobbyDestroy(void *address);
 // iterate symbol table and find symbol
 void *DobbySymbolResolver(const char *image_name, const char *symbol_name);
 
-// global offset table
-int DobbyGlobalOffsetTableReplace(char *image_name, char *symbol_name, void *fake_func, void **orig_func);
-
+// near branch plugin
 // [!!! READ ME !!!]
 // for arm, Arm64, dobby will use b xxx instead of ldr absolute indirect branch
 // for x64, dobby always use absolute indirect jump
 #if defined(__arm__) || defined(__arm64__) || defined(__aarch64__) || defined(_M_X64) || defined(__x86_64__)
+
 void dobby_enable_near_branch_trampoline();
+
 void dobby_disable_near_branch_trampoline();
+
 #endif
 
 // register linker load image callback
