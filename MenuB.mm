@@ -4,34 +4,15 @@
 #import "MenuB.h"
 #import "imgui.h"
 #import "imgui_impl_metal.h"
-#include <dlfcn.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <vector>
-#include <string>
-#include <unordered_set>
-#include <mutex>
-#include <thread>
-#include <atomic>
-#include <errno.h>
 
-#define kWidth  [UIScreen mainScreen].bounds.size.width
-#define kHeight [UIScreen mainScreen].bounds.size.height
-#define kScale [UIScreen mainScreen].scale
+extern bool MenDeal; // Tweak.x-də təyin olunduğu üçün burada extern edirik
 
 @interface ImGuiDrawView () <MTKViewDelegate>
 @property (nonatomic, strong) id <MTLDevice> device;
 @property (nonatomic, strong) id <MTLCommandQueue> commandQueue;
-@property (nonatomic, assign) BOOL canRunAgain;
 @end
 
 @implementation ImGuiDrawView
-
-bool MenDeal = false; // Lisenziya təsdiqlənəndən sonra menyunu açacaq qlobal dəyişən
-int Tab = 0;
-bool drawOutline = YES;
-bool HideHack = NO;
-extern ImVec4 ColorBoneVisible, ColorBoneInvisible, ColorLineVisible, ColorLineInvisible, ColorBoxVisible, ColorBoxInvisible, outlineColor;
 
 - (instancetype)initWithNibName:(nullable NSString *)nibNameOrNil bundle:(nullable NSBundle *)nibBundleOrNil
 {
@@ -131,13 +112,13 @@ extern ImVec4 ColorBoneVisible, ColorBoneInvisible, ColorLineVisible, ColorLineI
             if (MenDeal == true)
             {            
                 ImGui::SetNextWindowPos(ImVec2(screenSize.width * 0.5f, screenSize.height * 0.5f), ImGuiCond_FirstUseEver, ImVec2(0.5f, 0.5f));
-                ImGui::SetNextWindowSize({500, 300}, ImGuiCond_FirstUseEver);
+                ImGui::SetNextWindowSize(ImVec2(500, 300), ImGuiCond_FirstUseEver);
                 
                 ImGui::Begin("DARK IOS", &MenDeal, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
                 ImGui::Text("PUBG Ultimate Menu - Active");
                 ImGui::Separator();
                 
-                if (ImGui::Button("Close Menu")) {
+                if (ImGui::Button("Close Menu", ImVec2(120, 30))) {
                     MenDeal = false;
                 }
                 
