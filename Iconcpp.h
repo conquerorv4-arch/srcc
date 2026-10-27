@@ -1,8 +1,8 @@
 #pragma once
 
 /**
- * @autor SPraditya
- * email help : foxcheatsid@gmail.com
+ * @GKPFREEHACKS
+ * join telegram @GKPFREEHACKS
  */
 
 static const unsigned int font_awesome_size = 124565;

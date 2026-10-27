@@ -1,14 +1,15 @@
 #pragma once
 
 /**
- *@Prince Khan
- * join telegram @moonknightmod
+ *@Shaileshrajputgkp
+ * join telegram @GKPFREEHACKS
  */
 
 #define FONT_ICON_FILE_NAME_FAL "fa-light-300.ttf"
 #define FONT_ICON_FILE_NAME_FAR "fa-regular-400.ttf"
 #define FONT_ICON_FILE_NAME_FAS "fa-solid-900.ttf"
 
+#define ICON_FA_EYE            "\uf06e"
 #define ICON_MIN_FA 0xe000
 #define ICON_MAX_FA 0xf8ff
 #define ICON_FA_ABACUS "\xef\x99\x80"	// U+f640
@@ -2333,3 +2334,4 @@
 #define ICON_FA_YOUTUBE "\xef\x85\xa7"	// U+f167
 #define ICON_FA_YOUTUBE_SQUARE "\xef\x90\xb1"	// U+f431
 #define ICON_FA_ZHIHU "\xef\x98\xbf"	// U+f63f
+#define ICON_FA_LOCATION_CROSSHAIRS "\xef\x98\x81"
