@@ -4,10 +4,12 @@
 
 static UIWindow *overlayWindow = nil;
 static UIWindow *floatingWindow = nil;
-static UIWindow *cheatMenuWindow = nil;
 static UITextField *keyTextField = nil;
 static NSTimer *authTimer = nil;
 static BOOL isAuthorized = NO;
+
+// MenuB.mm içindəki ImGui menyusunu idarə edən qlobal dəyişən
+extern bool MenDeal;
 
 void verifyKey(NSString *inputKey);
 void showFloatingButton();
@@ -32,16 +34,6 @@ void toggleCheatMenu();
     
     btn.center = center;
     [pan setTranslation:CGPointZero inView:btn.superview];
-}
-@end
-
-@interface MenuHelper : NSObject
-@end
-@implementation MenuHelper
-+ (void)closeMenuTapped {
-    if (cheatMenuWindow) {
-        cheatMenuWindow.hidden = YES;
-    }
 }
 @end
 
@@ -195,59 +187,9 @@ void showFloatingButton() {
     [vc.view addSubview:floatBtn];
 }
 
-// Əsas Hiylə Menyusu
+// Yuvarlaq düyməyə basıldıqda DARK IOS ImGui menyusunu açır/bağlayır
 void toggleCheatMenu() {
-    if (cheatMenuWindow) {
-        cheatMenuWindow.hidden = !cheatMenuWindow.hidden;
-        return;
-    }
-
-    UIWindowScene *scene = nil;
-    for (UIScene *s in [UIApplication sharedApplication].connectedScenes) {
-        if ([s isKindOfClass:[UIWindowScene class]]) {
-            scene = (UIWindowScene *)s;
-            break;
-        }
-    }
-
-    if (@available(iOS 13.0, *)) {
-        if (scene) {
-            cheatMenuWindow = [[UIWindow alloc] initWithWindowScene:scene];
-        } else {
-            cheatMenuWindow = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
-        }
-    } else {
-        cheatMenuWindow = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
-    }
-
-    cheatMenuWindow.windowLevel = UIWindowLevelAlert + 1500;
-    cheatMenuWindow.backgroundColor = [UIColor clearColor];
-    
-    UIViewController *vc = [[UIViewController alloc] init];
-    cheatMenuWindow.rootViewController = vc;
-    [cheatMenuWindow makeKeyAndVisible];
-
-    UIView *menuPanel = [[UIView alloc] initWithFrame:CGRectMake(50, 80, [UIScreen mainScreen].bounds.size.width - 100, 300)];
-    menuPanel.backgroundColor = [UIColor colorWithRed:0.08 green:0.08 blue:0.1 alpha:0.95];
-    menuPanel.layer.cornerRadius = 16;
-    menuPanel.layer.borderWidth = 1.2;
-    menuPanel.layer.borderColor = [UIColor colorWithRed:0.2 green:0.6 blue:1.0 alpha:0.8].CGColor;
-    [vc.view addSubview:menuPanel];
-
-    UILabel *menuTitle = [[UILabel alloc] initWithFrame:CGRectMake(20, 15, menuPanel.frame.size.width - 40, 25)];
-    menuTitle.text = @"PUBG Ultimate Menu";
-    menuTitle.textColor = [UIColor whiteColor];
-    menuTitle.font = [UIFont boldSystemFontOfSize:18];
-    menuTitle.textAlignment = NSTextAlignmentCenter;
-    [menuPanel addSubview:menuTitle];
-
-    UIButton *closeBtn = [UIButton buttonWithType:UIButtonTypeSystem];
-    closeBtn.frame = CGRectMake(menuPanel.frame.size.width - 50, 12, 35, 30);
-    [closeBtn setTitle:@"X" forState:UIControlStateNormal];
-    [closeBtn setTitleColor:[UIColor redColor] forState:UIControlStateNormal];
-    closeBtn.titleLabel.font = [UIFont boldSystemFontOfSize:16];
-    [closeBtn addTarget:[MenuHelper class] action:@selector(closeMenuTapped) forControlEvents:UIControlEventTouchUpInside];
-    [menuPanel addSubview:closeBtn];
+    MenDeal = !MenDeal;
 }
 
 void showLoginMenu() {
