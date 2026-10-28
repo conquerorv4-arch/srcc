@@ -23,6 +23,7 @@
 #include "ESP/Vector2.hpp"
 #import <Foundation/Foundation.h>
 #include "ESP/tahoma.h"
+#include "Helper/ini_rw.h"
 
 #define ICON_FA_MEMORY ""
 #define ICON_FA_GUN "\xef\x9b\xab"
@@ -998,12 +999,7 @@ void DrawSettingsTab() {
 
 @end
 
-// ============= ADDITIONAL FIXES (INI & SHOW MENU) =============
-extern "C" {
-    typedef struct INI INI;
-    INI* ini_load(char* filename);
-}
-
+// ============= SHOW MENU OVERLAY WINDOW =============
 void ShowMenuOverlayWindow() {
     dispatch_async(dispatch_get_main_queue(), ^{
         UIWindow *window = [[UIApplication sharedApplication] keyWindow];
