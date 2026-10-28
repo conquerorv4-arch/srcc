@@ -986,14 +986,29 @@ void DrawSettingsTab() {
 
 @end
 
-// ============= LINKER FIX FOR Tweak.mm =============
+// ============= LINKER FIX & OVERLAY INITIALIZER =============
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 __attribute__((visibility("default"))) void ShowMenuOverlayWindow() {
     dispatch_async(dispatch_get_main_queue(), ^{
-        // Overlay və Menu pəncərəsini işə salan funksiya
+        UIWindow *window = [UIApplication sharedApplication].keyWindow;
+        if (!window) {
+            window = [[UIApplication sharedApplication].windows firstObject];
+        }
+        
+        if (window) {
+            static ModuleControl *modControl = new ModuleControl();
+            static mi *menuInstance = [[mi alloc] initWithFrame:modControl];
+            
+            CGRect frame = window.bounds;
+            OverlayView *overlay = [[OverlayView alloc] initWithFrame:frame :modControl :menuInstance];
+            [menuInstance setOverlayView:overlay];
+            
+            [window addSubview:overlay];
+            [window bringSubviewToFront:overlay];
+        }
     });
 }
 
