@@ -13,6 +13,6 @@ M7MD_FRAMEWORKS = IOKit UIKit Foundation Security QuartzCore CoreGraphics CoreTe
 M7MD_CCFLAGS = -w -std=gnu++14 -fno-rtti -fno-exceptions -DNDEBUG
 M7MD_CFLAGS = -w -fobjc-arc -Wno-deprecated-declarations -Wno-unused-variable -Wno-unused-value -I.
 
-M7MD_FILES = Tweak.mm Menu.mm imgui_impl_metal.mm $(wildcard imgui/*.cpp) $(wildcard imgui/*.mm)
+M7MD_FILES = Tweak.mm Menu.mm imgui_impl_metal.mm $(wildcard imgui/*.cpp)
 
 include $(THEOS_MAKE_PATH)/tweak.mk
