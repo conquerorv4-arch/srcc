@@ -429,7 +429,6 @@ OverlayView *overlayView;
     if(![fileManager fileExistsAtPath:filePath]){
         [fileManager createFileAtPath:filePath contents:[NSData data] attributes:nil];
     }
-    config = ini_load((char*)filePath.UTF8String);
     return [super init];
 }
 
