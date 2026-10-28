@@ -1,5 +1,4 @@
 #import "OverlayView.h"
-#include "imgui.h"
 #include "imgui_impl_metal.h"
 #import "../Image/font.h"
 #import "../Image/Icon.h"
@@ -12,7 +11,7 @@
     ImFont *_iconFont;
 }
 
-- (instancetype)initWithFrame:(CGRect)frame :(ModuleControl*)control :(id)menu {
+- (instancetype)initWithFrame:(CGRect)frame :(ModuleControl*)control :(mi*)menu {
     self.moduleControl = control;    
     self.mi = menu;
 
