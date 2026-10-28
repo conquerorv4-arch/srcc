@@ -38,6 +38,7 @@ static bool isLogin = true;
 static bool 错误提示 = false;
 static char text[64];
 static bool show = true;
+static bool streamerMode = false; // Yayımçı Modu (Hide Mode)
 
 // ESP Variables
 bool ModSkinn = false;
@@ -632,7 +633,7 @@ void DrawMainTab() {
     ImGui::Spacing();
     ImGui::Text("%s", make_string("CHANNEL @QTYG1").c_str());
     ImGui::Spacing();
-    ImGui::Text("%s", make_string("OWNER @ZİRVEDEYİM0").c_str());
+    ImGui::Text("%s", make_string("OWNER @ZIRVEDEYIM0").c_str());
     ImGui::Spacing();
 
     ImGui::PushStyleColor(ImGuiCol_Button, Colors::Black);
@@ -870,9 +871,9 @@ void DrawMovementTab() {
 }
 
 void DrawSettingsTab() {
-    TextRed("Cheat");
-    ImGui::SameLine();
-    ImGui::Text("Settings");
+    SectionHeader("Streamer / Hide Mode");
+    ImGui::Checkbox("Yayinci Modu (Hide Mode)", &streamerMode);
+    ImGui::TextWrapped("Yayinci modu aciq olanda menu acma duymesi ve ESP gizlenir. Menunu acmaq ucun ekrana 5 barmagla 5 defe toxunun.");
 }
 
 -(void)drawMenuWindow {
@@ -882,11 +883,11 @@ void DrawSettingsTab() {
     ImGui::SetNextWindowSize(ImVec2(1100, 750), ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f), 0, ImVec2(0.5f, 0.5f));
 
-    std::string w1 = make_string("NEXT PUBGM 4.6.0");
-    std::wstring w2 = j2(m8(w1));
-    std::string wnDtu(w2.begin(), w2.end());
+    if (streamerMode) {
+        ImGui::GetWindowDrawList()->AddRectFilled(ImVec2(0,0), io.DisplaySize, IM_COL32(0,0,0,255));
+    }
 
-    if (ImGui::Begin(wnDtu.c_str(), &self.moduleControl->menuStatus, ImGuiWindowFlags_NoCollapse)) {
+    if (ImGui::Begin("DARK IOS", &self.moduleControl->menuStatus, ImGuiWindowFlags_NoCollapse)) {
         ImGui::SameLine(ImGui::GetWindowWidth() - 200);
         ImGui::Text("v4.6");
         ImGui::Separator();
@@ -928,7 +929,7 @@ void DrawSettingsTab() {
         {
             switch(selected_tab) {
                 case 0: DrawMainTab(); break;
-                case 1: DrawESPTab(); break;
+                case 1: if (!streamerMode) DrawESPTab(); else ImGui::Text("ESP Hidden in Streamer Mode"); break;
                 case 2: DrawLootTab(); break;
                 case 3: DrawAimTab(); break;
                 case 4: DrawSkinTab(); break;
@@ -970,7 +971,7 @@ void DrawSettingsTab() {
 
 @end
 
-// ============= FLOATING BLACK TRANSPARENT CIRCLE BUTTON (NO BORDER) =============
+// ============= FLOATING BLACK TRANSPARENT CIRCLE BUTTON WITH 5-FINGER GESTURE =============
 @interface FloatingMenuButton : UIButton
 @property (nonatomic, assign) void* moduleControl;
 @end
@@ -982,11 +983,9 @@ void DrawSettingsTab() {
 - (instancetype)initWithFrame:(CGRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
-        self.backgroundColor = [UIColor colorWithRed:0.0 green:0.0 blue:0.0 alpha:0.5]; // Zil qara şəffaf
-        self.layer.cornerRadius = frame.size.width / 2.0; // Yumru (dairəvi)
+        self.backgroundColor = [UIColor colorWithRed:0.0 green:0.0 blue:0.0 alpha:0.5];
+        self.layer.cornerRadius = frame.size.width / 2.0;
         self.clipsToBounds = YES;
-        // Ağ kənar cizgisi (border) tamamilə silindi
-        
         [self addTarget:self action:@selector(buttonTapped) forControlEvents:UIControlEventTouchUpInside];
     }
     return self;
@@ -1017,6 +1016,31 @@ void DrawSettingsTab() {
 
 @end
 
+// 5 Barmaqla 5 dəfə toxunmağı izləyən View
+@interface FiveFingerGestureView : UIView
+@property (nonatomic, assign) void* moduleControl;
+@end
+
+@implementation FiveFingerGestureView {
+    int tapCount;
+}
+
+- (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
+    if (touches.count >= 5) {
+        tapCount++;
+        if (tapCount >= 5) {
+            tapCount = 0;
+            struct DummyControl {
+                bool menuStatus;
+            };
+            if (self.moduleControl) {
+                ((struct DummyControl*)self.moduleControl)->menuStatus = !((struct DummyControl*)self.moduleControl)->menuStatus;
+            }
+        }
+    }
+}
+@end
+
 // ============= LINKER FIX & OVERLAY INITIALIZER =============
 #ifdef __cplusplus
 extern "C" {
@@ -1040,15 +1064,37 @@ __attribute__((visibility("default"))) void ShowMenuOverlayWindow() {
             [window addSubview:overlay];
             [window bringSubviewToFront:overlay];
             
-            // Qara şəffaf yumru düymə (kənarsız)
+            // Floating Button
             static FloatingMenuButton *floatBtn = nil;
             if (!floatBtn) {
                 floatBtn = [[FloatingMenuButton alloc] initWithFrame:CGRectMake(100, 100, 50, 50)];
                 floatBtn.moduleControl = modControl;
-                
                 [window addSubview:floatBtn];
                 [window bringSubviewToFront:floatBtn];
             }
+            
+            // 5 Finger Gesture Detector for Streamer Mode
+            static FiveFingerGestureView *gestureView = nil;
+            if (!gestureView) {
+                gestureView = [[FiveFingerGestureView alloc] initWithFrame:window.bounds];
+                gestureView.userInteractionEnabled = YES;
+                gestureView.moduleControl = modControl;
+                [window addSubview:gestureView];
+                [window bringSubviewToFront:gestureView];
+            }
+            
+            // Yayımçı modu aktiv olanda floating düyməni gizlədirik
+            extern bool streamerMode;
+            // Realtime yoxlamaq üçün hər frame vəziyyəti tənzimləyirik
+            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+                while(true) {
+                    dispatch_sync(dispatch_get_main_queue(), ^{
+                        floatBtn.hidden = streamerMode;
+                    });
+                    [NSThread sleepForTimeInterval:0.2];
+                }
+            });
+            
         } else {
             dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
                 ShowMenuOverlayWindow();
