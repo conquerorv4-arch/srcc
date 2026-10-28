@@ -1,24 +1,22 @@
 #import "OverlayView.h"
+#include "imgui.h"
 #include "imgui_impl_metal.h"
 #import "../Image/font.h"
 #import "../Image/Icon.h"
 #import "../Image/Iconcpp.h"
 #import <objc/runtime.h>
-#import "../菜单.h"
 
 @implementation OverlayView {
     ImFont *_espFont;
     ImFont *_iconFont;
 }
 
-- (instancetype)initWithFrame:(CGRect)frame :(ModuleControl*)control :(mi*)menu {
+- (instancetype)initWithFrame:(CGRect)frame :(ModuleControl*)control :(id)menu {
     self.moduleControl = control;    
     self.mi = menu;
 
     if (self = [super initWithFrame:frame]) {
-        //清空颜色
         self.backgroundColor = [UIColor clearColor];
-        //设置帧率限制
         self.preferredFramesPerSecond = 120;
 
         self.device = MTLCreateSystemDefaultDevice();
@@ -43,7 +41,6 @@
         icons_config.PixelSnapH = true;
         ImGui::StyleColorsDark();      
         
-        //添加中文字体
         config.FontDataOwnedByAtlas = false;
         io.Fonts->AddFontFromMemoryTTF((void *)Fontdata, Fontsize, 30.0f, NULL,
         io.Fonts->GetGlyphRangesChineseFull());
@@ -54,9 +51,8 @@
         io.DisplaySize.x =  self.frame.size.width * UIScreen.mainScreen.nativeScale;
         io.DisplaySize.y =  self.frame.size.height * UIScreen.mainScreen.nativeScale;
         
-        ImGui::StyleColorsDarkMode();     //白色主题
+        ImGui::StyleColorsDarkMode();
 
-        // Setup Renderer backend
         ImGui_ImplMetal_Init(self.device);
         [self.mi setOverlayView:self];
     }
@@ -65,7 +61,6 @@
 
 + (void)load {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        //这里是弹窗
     });
 }
 
@@ -74,9 +69,7 @@
 }
 
 - (void)drawInMTKView:(MTKView *)view {
-    //抗锯齿
     view.sampleCount = 4;
-    //清除颜色
     view.clearColor = MTLClearColorMake(0.0f, 0.0f, 0.0f, 0.0f);
     
     struct timespec current_timespec;
@@ -97,7 +90,6 @@
             [self.mi drawMenuWindow];
         }
    
-        //渲染
         ImGui::Render();
         ImDrawData *drawData = ImGui::GetDrawData();
         id <MTLRenderCommandEncoder> renderEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
