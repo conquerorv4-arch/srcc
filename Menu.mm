@@ -290,21 +290,21 @@ namespace Settings {
 
 
 namespace Colors {
-    const ImVec4 Black = ImVec4(0.08f, 0.08f, 0.08f, 1.00f);
-    const ImVec4 DarkGray = ImVec4(0.12f, 0.12f, 0.12f, 1.00f);
-    const ImVec4 MediumGray = ImVec4(0.20f, 0.20f, 0.20f, 1.00f);
-    const ImVec4 LightGray = ImVec4(0.30f, 0.30f, 0.30f, 1.00f);
+    const ImVec4 Black = ImVec4(0.00f, 0.00f, 0.00f, 1.00f);
+    const ImVec4 DarkGray = ImVec4(0.04f, 0.04f, 0.04f, 1.00f);
+    const ImVec4 MediumGray = ImVec4(0.12f, 0.12f, 0.12f, 1.00f);
+    const ImVec4 LightGray = ImVec4(0.85f, 0.85f, 0.85f, 1.00f);
     const ImVec4 White = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
     const ImVec4 Gray = ImVec4(0.50f, 0.50f, 0.50f, 1.00f);
     
-    const ImVec4 Accent = ImVec4(0.0f, 0.45f, 0.25f, 1.00f);
-    const ImVec4 AccentHover = ImVec4(0.0f, 0.55f, 0.30f, 1.00f);
-    const ImVec4 AccentActive = ImVec4(0.0f, 0.65f, 0.35f, 1.00f);
+    const ImVec4 Accent = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
+    const ImVec4 AccentHover = ImVec4(0.80f, 0.80f, 0.80f, 1.00f);
+    const ImVec4 AccentActive = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
     
-    const ImVec4 Success = ImVec4(0.0f, 0.8f, 0.3f, 1.00f);
-    const ImVec4 Warning = ImVec4(1.0f, 0.7f, 0.0f, 1.00f);
-    const ImVec4 Error = ImVec4(1.0f, 0.2f, 0.2f, 1.00f);
-    const ImVec4 Info = ImVec4(0.3f, 0.7f, 1.0f, 1.00f);
+    const ImVec4 Success = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
+    const ImVec4 Warning = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
+    const ImVec4 Error = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
+    const ImVec4 Info = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
 }
 
 // ============= HELPER FUNCTIONS =============
@@ -326,7 +326,7 @@ void TextBlue(const char* text) {
 
 void SectionHeader(const char* text) {
     ImGui::Spacing();
-    ImGui::PushStyleColor(ImGuiCol_Text, Colors::Accent);
+    ImGui::PushStyleColor(ImGuiCol_Text, Colors::White);
     ImGui::Text("%s", text);
     ImGui::PopStyleColor();
     ImGui::Separator();
@@ -346,62 +346,62 @@ void ApplyModernDarkTheme() {
     colors[ImGuiCol_WindowBg] = Colors::Black;
     colors[ImGuiCol_ChildBg] = Colors::DarkGray;
     colors[ImGuiCol_PopupBg] = Colors::DarkGray;
-    colors[ImGuiCol_MenuBarBg] = ImVec4(0.12f, 0.12f, 0.12f, 0.50f);
+    colors[ImGuiCol_MenuBarBg] = ImVec4(0.0f, 0.0f, 0.0f, 0.80f);
     
-    colors[ImGuiCol_Border] = ImVec4(0.30f, 0.30f, 0.30f, 0.60f);
+    colors[ImGuiCol_Border] = ImVec4(1.00f, 1.00f, 1.00f, 0.90f);
     colors[ImGuiCol_BorderShadow] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
-    colors[ImGuiCol_Separator] = Colors::Accent;
-    colors[ImGuiCol_SeparatorHovered] = Colors::AccentHover;
-    colors[ImGuiCol_SeparatorActive] = Colors::AccentActive;
+    colors[ImGuiCol_Separator] = Colors::White;
+    colors[ImGuiCol_SeparatorHovered] = Colors::LightGray;
+    colors[ImGuiCol_SeparatorActive] = Colors::White;
     
     colors[ImGuiCol_Text] = Colors::White;
     colors[ImGuiCol_TextDisabled] = Colors::Gray;
-    colors[ImGuiCol_TextSelectedBg] = ImVec4(0.0f, 0.4f, 0.2f, 0.35f);
+    colors[ImGuiCol_TextSelectedBg] = ImVec4(1.0f, 1.0f, 1.0f, 0.35f);
     
-    colors[ImGuiCol_Button] = Colors::Black;
-    colors[ImGuiCol_ButtonHovered] = ImVec4(0.15f, 0.15f, 0.15f, 1.00f);
-    colors[ImGuiCol_ButtonActive] = Colors::MediumGray;
+    colors[ImGuiCol_Button] = Colors::MediumGray;
+    colors[ImGuiCol_ButtonHovered] = ImVec4(0.3f, 0.3f, 0.3f, 1.00f);
+    colors[ImGuiCol_ButtonActive] = Colors::White;
     
-    colors[ImGuiCol_FrameBg] = ImVec4(0.10f, 0.10f, 0.10f, 1.00f);
-    colors[ImGuiCol_FrameBgHovered] = ImVec4(0.20f, 0.20f, 0.20f, 1.00f);
+    colors[ImGuiCol_FrameBg] = ImVec4(0.08f, 0.08f, 0.08f, 1.00f);
+    colors[ImGuiCol_FrameBgHovered] = ImVec4(0.18f, 0.18f, 0.18f, 1.00f);
     colors[ImGuiCol_FrameBgActive] = ImVec4(0.30f, 0.30f, 0.30f, 1.00f);
-    colors[ImGuiCol_CheckMark] = ImVec4(1.0f, 0.0f, 0.0f, 1.0f);    
+    colors[ImGuiCol_CheckMark] = Colors::White;    
     
-    colors[ImGuiCol_SliderGrab] = ImVec4(0.60f, 0.60f, 0.60f, 1.00f);
-    colors[ImGuiCol_SliderGrabActive] = ImVec4(0.90f, 0.90f, 0.90f, 1.00f);
+    colors[ImGuiCol_SliderGrab] = Colors::White;
+    colors[ImGuiCol_SliderGrabActive] = Colors::LightGray;
     
     colors[ImGuiCol_Tab] = Colors::Black;
-    colors[ImGuiCol_TabHovered] = ImVec4(0.15f, 0.15f, 0.15f, 1.00f);
+    colors[ImGuiCol_TabHovered] = Colors::MediumGray;
     colors[ImGuiCol_TabActive] = Colors::MediumGray;
-    colors[ImGuiCol_TabUnfocused] = ImVec4(0.05f, 0.05f, 0.05f, 1.00f);
-    colors[ImGuiCol_TabUnfocusedActive] = ImVec4(0.10f, 0.10f, 0.10f, 1.00f);
+    colors[ImGuiCol_TabUnfocused] = Colors::Black;
+    colors[ImGuiCol_TabUnfocusedActive] = Colors::DarkGray;
     
-    colors[ImGuiCol_Header] = Colors::Accent;
-    colors[ImGuiCol_HeaderHovered] = Colors::AccentHover;
-    colors[ImGuiCol_HeaderActive] = Colors::AccentActive;
+    colors[ImGuiCol_Header] = Colors::MediumGray;
+    colors[ImGuiCol_HeaderHovered] = ImVec4(0.2f, 0.2f, 0.2f, 1.00f);
+    colors[ImGuiCol_HeaderActive] = Colors::White;
     
     colors[ImGuiCol_TitleBg] = Colors::Black;
-    colors[ImGuiCol_TitleBgActive] = ImVec4(0.10f, 0.10f, 0.10f, 1.00f);
-    colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.08f, 0.08f, 0.08f, 0.75f);
+    colors[ImGuiCol_TitleBgActive] = Colors::Black;
+    colors[ImGuiCol_TitleBgCollapsed] = Colors::Black;
     
     colors[ImGuiCol_ScrollbarBg] = Colors::Black;
-    colors[ImGuiCol_ScrollbarGrab] = ImVec4(0.0f, 0.3f, 0.2f, 0.60f);
-    colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.0f, 0.4f, 0.25f, 0.80f);
-    colors[ImGuiCol_ScrollbarGrabActive] = ImVec4(0.0f, 0.5f, 0.3f, 1.00f);
+    colors[ImGuiCol_ScrollbarGrab] = Colors::Gray;
+    colors[ImGuiCol_ScrollbarGrabHovered] = Colors::LightGray;
+    colors[ImGuiCol_ScrollbarGrabActive] = Colors::White;
     
-    colors[ImGuiCol_ResizeGrip] = ImVec4(0.0f, 0.3f, 0.2f, 0.30f);
-    colors[ImGuiCol_ResizeGripHovered] = ImVec4(0.0f, 0.4f, 0.25f, 0.60f);
-    colors[ImGuiCol_ResizeGripActive] = ImVec4(0.0f, 0.5f, 0.3f, 0.90f);
+    colors[ImGuiCol_ResizeGrip] = Colors::Gray;
+    colors[ImGuiCol_ResizeGripHovered] = Colors::LightGray;
+    colors[ImGuiCol_ResizeGripActive] = Colors::White;
     
-    colors[ImGuiCol_NavHighlight] = Colors::AccentActive;
+    colors[ImGuiCol_NavHighlight] = Colors::White;
     
-    style.WindowRounding = 12.0f;
-    style.ChildRounding = 8.0f;
-    style.FrameRounding = 6.0f;
-    style.PopupRounding = 8.0f;
-    style.ScrollbarRounding = 10.0f;
-    style.GrabRounding = 6.0f;
-    style.TabRounding = 6.0f;
+    style.WindowRounding = 8.0f;
+    style.ChildRounding = 6.0f;
+    style.FrameRounding = 4.0f;
+    style.PopupRounding = 6.0f;
+    style.ScrollbarRounding = 6.0f;
+    style.GrabRounding = 4.0f;
+    style.TabRounding = 4.0f;
     
     style.WindowPadding = ImVec2(15, 15);
     style.FramePadding = ImVec2(12, 8);
@@ -504,9 +504,9 @@ void DrawMainTab() {
 
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(15, 15));
     ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 5.0f);
-    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.5f, 0.8f, 1.0f));
-    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.3f, 0.6f, 0.9f, 1.0f));
-    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.1f, 0.4f, 0.7f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.1f, 0.1f, 0.1f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.3f, 0.3f, 0.3f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.5f, 0.5f, 0.5f, 1.0f));
     ImGui::PushStyleColor(ImGuiCol_Text, Colors::White);
 
     if (ImGui::Button("ACTIVATE BYPASS SYSTEM", ImVec2(-1, 60))) {
@@ -547,28 +547,19 @@ void DrawMainTab() {
         ImGui::PushStyleVar(ImGuiStyleVar_Alpha, window_alpha);
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(15, 15));
         ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 5.0f);
-        ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.08f, 0.08f, 0.08f, 0.95f));
-        ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.2f, 0.2f, 0.2f, 1.0f));
-        ImGui::PushStyleColor(ImGuiCol_BorderShadow, ImVec4(0.0f, 0.4f, 0.8f, glow_effect));
+        ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.0f, 0.0f, 0.0f, 0.95f));
+        ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_BorderShadow, ImVec4(1.0f, 1.0f, 1.0f, glow_effect));
         
         ImGui::BeginChild("BypassConsole", ImVec2(0, ImGui::GetTextLineHeight() * 16 * text_scale), true, ImGuiWindowFlags_NoScrollbar);
         
-        ImGui::TextColored(ImVec4(0.4f, 0.8f, 1.0f, 1.0f), "PUBG MOBILE SECURITY BYPASS SYSTEM v1.1.0");
+        ImGui::TextColored(Colors::White, "PUBG MOBILE SECURITY BYPASS SYSTEM v1.1.0");
         ImGui::Separator();
         
         ImGui::BeginChild("ConsoleContent", ImVec2(0, ImGui::GetTextLineHeight() * 12 * text_scale), false, ImGuiWindowFlags_HorizontalScrollbar);
         
         for (int i = 0; i < current_message_index && i < total_messages; i++) {
-            ImVec4 color;
-            switch (messages[i].color) {
-                case 0: color = ImVec4(0.0f, 1.0f, 0.0f, 1.0f); break;
-                case 1: color = ImVec4(1.0f, 0.3f, 0.3f, 1.0f); break;
-                case 2: color = ImVec4(0.4f, 0.8f, 1.0f, 1.0f); break;
-                case 3: color = ImVec4(1.0f, 0.8f, 0.0f, 1.0f); break;
-                case 4: color = ImVec4(0.8f, 0.2f, 1.0f, 1.0f); break;
-                default: color = Colors::White; break;
-            }
-            
+            ImVec4 color = Colors::White;
             ImGui::TextColored(color, "[%02d:%02d:%03d] %s", 
                 (int)(elapsed_time/60000), 
                 (int)(elapsed_time/1000)%60, 
@@ -583,16 +574,15 @@ void DrawMainTab() {
         ImGui::EndChild();
         ImGui::Separator();
         
-        ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.1f, 0.1f, 0.1f, 1.0f));
-        ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.2f, 0.6f, 1.0f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.05f, 0.05f, 0.05f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
         ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 3.0f);
         ImGui::ProgressBar(bypass_progress, ImVec2(-1, 30), "");
         ImGui::PopStyleVar();
         ImGui::PopStyleColor(2);
         
-        ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "Status: %s", 
-            bypass_in_progress ? "IN PROGRESS" : "COMPLETED");
-        ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "Progress: %.1f%%", bypass_progress * 100);
+        ImGui::TextColored(Colors::White, "Status: %s", bypass_in_progress ? "IN PROGRESS" : "COMPLETED");
+        ImGui::TextColored(Colors::White, "Progress: %.1f%%", bypass_progress * 100);
         
         ImGui::EndChild();
         ImGui::PopStyleColor(3);
@@ -603,26 +593,23 @@ void DrawMainTab() {
         ImGui::PushStyleVar(ImGuiStyleVar_Alpha, window_alpha);
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(30, 30));
         ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 10.0f);
-        ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.1f, 0.15f, 0.2f, 0.95f));
-        ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.5f, 1.0f, 0.5f));
-        ImGui::PushStyleColor(ImGuiCol_BorderShadow, ImVec4(0.0f, 0.8f, 1.0f, success_glow));
+        ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.0f, 0.0f, 0.0f, 0.95f));
+        ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_BorderShadow, ImVec4(1.0f, 1.0f, 1.0f, success_glow));
         ImGui::PushStyleColor(ImGuiCol_Text, Colors::White);
         
         ImGui::BeginChild("SuccessWindow", ImVec2(0, 200), true);
         
         ImGui::SetCursorPosX((ImGui::GetWindowWidth() - ImGui::CalcTextSize("BYPASS ACTIVATED SUCCESSFULLY!").x) * 0.5f);
-        ImGui::TextColored(Colors::Success, "BYPASS ACTIVATED SUCCESSFULLY!");
-        
-        ImGui::SetCursorPosX((ImGui::GetWindowWidth() - ImGui::CalcTextSize("安全绕过已成功激活!").x) * 0.5f);
-        ImGui::TextColored(Colors::Info, "安全绕过已成功激活!");
+        ImGui::TextColored(Colors::White, "BYPASS ACTIVATED SUCCESSFULLY!");
         
         ImGui::Dummy(ImVec2(0, 20));
         
         ImGui::SetCursorPosX((ImGui::GetWindowWidth() - 200) * 0.5f);
         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(20, 15));
-        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.7f, 0.2f, 1.0f));
-        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.3f, 0.8f, 0.3f, 1.0f));
-        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.1f, 0.6f, 0.1f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.1f, 0.1f, 0.1f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.3f, 0.3f, 0.3f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.5f, 0.5f, 0.5f, 1.0f));
         
         if (ImGui::Button("DONE", ImVec2(200, 60))) {
             bypass_completed = false;
@@ -641,19 +628,16 @@ void DrawMainTab() {
     ImGui::Separator();
     ImGui::Spacing();
 
-    ImGui::Text(ENCRYPT("Welcome To CHEAT"));
+    ImGui::Text(ENCRYPT("pwwzww & darkhxte :)"));
     ImGui::Spacing();
-    ImGui::Text("%s", make_string("@mci_h").c_str());
-
-    NSString *xx1 = [NSString stringWithUTF8String:make_string("N E X T").c_str()];
-    std::wstring xx2 = j2(m8(std::string([xx1 UTF8String])));
-    std::string utf8(xx2.begin(), xx2.end());
-    ImGui::Text("%s", utf8.c_str());
+    ImGui::Text("%s", make_string("CHANNEL @QTYG1").c_str());
+    ImGui::Spacing();
+    ImGui::Text("%s", make_string("OWNER @ZİRVEDEYİM0").c_str());
     ImGui::Spacing();
 
     ImGui::PushStyleColor(ImGuiCol_Button, Colors::Black);
-    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.3f, 0.3f, 0.3f, 1.0f));
-    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.5f, 0.5f, 0.5f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.2f, 0.2f, 0.2f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.4f, 0.4f, 0.4f, 1.0f));
     ImGui::PushStyleColor(ImGuiCol_Text, Colors::White);
 
     ImGui::Spacing();
@@ -709,7 +693,7 @@ void DrawAimTab() {
     SectionHeader("Cover Damage");
     TextRed("Note: Use V3 for best results with 180° BT");    
     ImGui::Columns(3, nullptr, false);
-    ImGui::PushStyleColor(ImGuiCol_Text, Colors::Error);
+    ImGui::PushStyleColor(ImGuiCol_Text, Colors::White);
     ImGui::Checkbox("FAKE DAMAGE V1", &FAKEDAMAGE);
     ImGui::NextColumn();
     ImGui::Checkbox("FAKE DAMAGE V2", &FAKEDAMAGEV2);
@@ -721,7 +705,7 @@ void DrawAimTab() {
     ImGui::Spacing();
     ImGui::Separator();
     SectionHeader("Auto Stand");
-    ImGui::PushStyleColor(ImGuiCol_Text, Colors::Error);
+    ImGui::PushStyleColor(ImGuiCol_Text, Colors::White);
     ImGui::Checkbox("Auto Stand V1", &AutoStandd);
     ImGui::PopStyleColor();
     
@@ -904,7 +888,7 @@ void DrawSettingsTab() {
 
     if (ImGui::Begin(wnDtu.c_str(), &self.moduleControl->menuStatus, ImGuiWindowFlags_NoCollapse)) {
         ImGui::SameLine(ImGui::GetWindowWidth() - 200);
-        ImGui::Text("v4.2");
+        ImGui::Text("v4.6");
         ImGui::Separator();
         
         static int selected_tab = 0;
@@ -912,7 +896,7 @@ void DrawSettingsTab() {
         
         ImGui::BeginChild("Sidebar", ImVec2(sidebar_width, 0), true);
         {
-            ImGui::PushStyleColor(ImGuiCol_Text, Colors::Accent);
+            ImGui::PushStyleColor(ImGuiCol_Text, Colors::White);
             ImGui::SetCursorPosX((sidebar_width - ImGui::CalcTextSize("MENU").x) * 0.5f);
             ImGui::Text("MENU");
             ImGui::PopStyleColor();
@@ -923,11 +907,11 @@ void DrawSettingsTab() {
             
             for (int i = 0; i < 8; i++) {
                 if (selected_tab == i) {
-                    ImGui::PushStyleColor(ImGuiCol_Button, Colors::Accent);
-                    ImGui::PushStyleColor(ImGuiCol_Text, Colors::White);
+                    ImGui::PushStyleColor(ImGuiCol_Button, Colors::White);
+                    ImGui::PushStyleColor(ImGuiCol_Text, Colors::Black);
                 } else {
                     ImGui::PushStyleColor(ImGuiCol_Button, Colors::Black);
-                    ImGui::PushStyleColor(ImGuiCol_Text, Colors::Gray);
+                    ImGui::PushStyleColor(ImGuiCol_Text, Colors::White);
                 }
                 
                 if (ImGui::Button(tabs[i], ImVec2(-1, 50))) {
@@ -986,7 +970,7 @@ void DrawSettingsTab() {
 
 @end
 
-// ============= FLOATING BLACK TRANSPARENT CIRCLE BUTTON =============
+// ============= FLOATING BLACK TRANSPARENT CIRCLE BUTTON (NO BORDER) =============
 @interface FloatingMenuButton : UIButton
 @property (nonatomic, assign) void* moduleControl;
 @end
@@ -998,11 +982,10 @@ void DrawSettingsTab() {
 - (instancetype)initWithFrame:(CGRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
-        self.backgroundColor = [UIColor colorWithRed:0.0 green:0.0 blue:0.0 alpha:0.4]; // Qara şəffaf
+        self.backgroundColor = [UIColor colorWithRed:0.0 green:0.0 blue:0.0 alpha:0.5]; // Zil qara şəffaf
         self.layer.cornerRadius = frame.size.width / 2.0; // Yumru (dairəvi)
         self.clipsToBounds = YES;
-        self.layer.borderWidth = 1.5f;
-        self.layer.borderColor = [UIColor colorWithWhite:1.0 alpha:0.3].CGColor;
+        // Ağ kənar cizgisi (border) tamamilə silindi
         
         [self addTarget:self action:@selector(buttonTapped) forControlEvents:UIControlEventTouchUpInside];
     }
@@ -1057,7 +1040,7 @@ __attribute__((visibility("default"))) void ShowMenuOverlayWindow() {
             [window addSubview:overlay];
             [window bringSubviewToFront:overlay];
             
-            // Qara şəffaf yumru düymə
+            // Qara şəffaf yumru düymə (kənarsız)
             static FloatingMenuButton *floatBtn = nil;
             if (!floatBtn) {
                 floatBtn = [[FloatingMenuButton alloc] initWithFrame:CGRectMake(100, 100, 50, 50)];
