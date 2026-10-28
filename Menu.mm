@@ -1008,6 +1008,11 @@ __attribute__((visibility("default"))) void ShowMenuOverlayWindow() {
             
             [window addSubview:overlay];
             [window bringSubviewToFront:overlay];
+        } else {
+            // Pəncərə hələ tam hazır deyilsə, hər 0.5 saniyədən bir təkrar yoxlayır
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                ShowMenuOverlayWindow();
+            });
         }
     });
 }
