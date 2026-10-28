@@ -6,9 +6,6 @@
 #import "../Image/Iconcpp.h"
 #import <objc/runtime.h>
 
-// Menu və digər sinifləri burada irəli elan edirik ki, təkrar imgui konflikti olmasın
-@class mi;
-
 @implementation OverlayView {
     ImFont *_espFont;
     ImFont *_iconFont;
@@ -57,7 +54,7 @@
         ImGui::StyleColorsDarkMode();
 
         ImGui_ImplMetal_Init(self.device);
-        [self.mi performSelector:@selector(setOverlayView:) withObject:self];
+        [self.mi setOverlayView:self];
     }
     return self;
 }
@@ -90,7 +87,7 @@
         ImGui::NewFrame();
         
         if (self.moduleControl->menuStatus) {
-            [self.mi performSelector:@selector(drawMenuWindow)];
+            [self.mi drawMenuWindow];
         }
    
         ImGui::Render();
