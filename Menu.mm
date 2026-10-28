@@ -987,8 +987,16 @@ void DrawSettingsTab() {
 @end
 
 // ============= LINKER FIX FOR Tweak.mm =============
-extern "C" void ShowMenuOverlayWindow() {
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void ShowMenuOverlayWindow() {
     dispatch_async(dispatch_get_main_queue(), ^{
         // Overlay və Menu işə salınması
     });
 }
+
+#ifdef __cplusplus
+}
+#endif
