@@ -887,6 +887,8 @@ void DrawSettingsTab() {
         ImGui::GetWindowDrawList()->AddRectFilled(ImVec2(0,0), io.DisplaySize, IM_COL32(0,0,0,255));
     }
 
+    // Sol üst başlıq qalın fontla DARK IOS
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(15, 15));
     if (ImGui::Begin("DARK IOS", &self.moduleControl->menuStatus, ImGuiWindowFlags_NoCollapse)) {
         ImGui::SameLine(ImGui::GetWindowWidth() - 200);
         ImGui::Text("v4.6");
@@ -941,6 +943,7 @@ void DrawSettingsTab() {
         ImGui::EndChild();
     }
     ImGui::End();
+    ImGui::PopStyleVar();
 }
 
 - (UIWindow*)GetUIW {
@@ -971,7 +974,7 @@ void DrawSettingsTab() {
 
 @end
 
-// ============= FLOATING BLACK TRANSPARENT CIRCLE BUTTON WITH 5-FINGER GESTURE =============
+// ============= FLOATING BLACK TRANSPARENT CIRCLE BUTTON (NO BORDER) =============
 @interface FloatingMenuButton : UIButton
 @property (nonatomic, assign) void* moduleControl;
 @end
@@ -1016,13 +1019,17 @@ void DrawSettingsTab() {
 
 @end
 
-// 5 Barmaqla 5 dəfə toxunmağı izləyən View
+// 5 Barmaqla 5 dəfə toxunmağı izləyən View (Oyuna toxunmanı əngəlləməyən)
 @interface FiveFingerGestureView : UIView
 @property (nonatomic, assign) void* moduleControl;
 @end
 
 @implementation FiveFingerGestureView {
     int tapCount;
+}
+
+- (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
+    return nil; // Toxunmaları arxadakı oyuna ötürür, oyunu qətiyyən əngəlləmir
 }
 
 - (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
@@ -1073,7 +1080,7 @@ __attribute__((visibility("default"))) void ShowMenuOverlayWindow() {
                 [window bringSubviewToFront:floatBtn];
             }
             
-            // 5 Finger Gesture Detector for Streamer Mode
+            // 5 Finger Gesture Detector
             static FiveFingerGestureView *gestureView = nil;
             if (!gestureView) {
                 gestureView = [[FiveFingerGestureView alloc] initWithFrame:window.bounds];
@@ -1085,7 +1092,6 @@ __attribute__((visibility("default"))) void ShowMenuOverlayWindow() {
             
             // Yayımçı modu aktiv olanda floating düyməni gizlədirik
             extern bool streamerMode;
-            // Realtime yoxlamaq üçün hər frame vəziyyəti tənzimləyirik
             dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
                 while(true) {
                     dispatch_sync(dispatch_get_main_queue(), ^{
