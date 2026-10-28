@@ -432,7 +432,7 @@ OverlayView *overlayView;
 - (void)initializeImGui {
     ImGuiIO& io = ImGui::GetIO();
     NSString *fontPath = [[NSBundle mainBundle] pathForResource:@"SourGummy-Regular" ofType:@"otf"];
-    io.Fonts->AddFontFromFileTTF([fontPath UTF8String], 24.0f);
+    io.Fonts->AddFontFromMemoryTTF((void *)Fontdata, Fontsize, 24.0f, NULL, io.Fonts->GetGlyphRangesChineseFull());
 }
 
 // ============= TAB DRAWING FUNCTIONS =============
@@ -895,7 +895,6 @@ void DrawSettingsTab() {
 }
 
 -(void)drawMenuWindow {
-    ImGui::CreateContext();
     ApplyModernDarkTheme();
     
     ImGuiIO& io = ImGui::GetIO();
@@ -989,29 +988,3 @@ void DrawSettingsTab() {
 - (void)dealloc {}
 
 @end
-
-// ============= SHOW MENU OVERLAY WINDOW =============
-void ShowMenuOverlayWindow() {
-    dispatch_async(dispatch_get_main_queue(), ^{
-        UIWindow *window = nil;
-        for (UIWindow *tmpWindow in [UIApplication sharedApplication].windows) {
-            if (tmpWindow.isKeyWindow) {
-                window = tmpWindow;
-                break;
-            }
-        }
-        if (!window) {
-            window = [UIApplication sharedApplication].windows.firstObject;
-        }
-        
-        if (window) {
-            ModuleControl *control = new ModuleControl();
-            mi *menu = [[mi alloc] initWithFrame:control];
-            
-            OverlayView *overlay = [[OverlayView alloc] initWithFrame:window.bounds];
-            
-            [menu setOverlayView:overlay];
-            [window addSubview:overlay];
-        }
-    });
-}
