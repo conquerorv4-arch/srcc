@@ -1,5 +1,4 @@
 #import "OverlayView.h"
-#include "imgui_impl_metal.h"  // Yalnız metal backend-i saxlayırıq, imgui.h artıq menü.h tərəfindən gəlir
 #import "../Image/font.h"
 #import "../Image/Icon.h"
 #import "../Image/Iconcpp.h"
