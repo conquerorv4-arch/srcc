@@ -986,6 +986,40 @@ void DrawSettingsTab() {
 
 @end
 
+// ============= FLOATING BLACK TRANSPARENT CIRCLE BUTTON =============
+@interface FloatingMenuButton : UIButton
+@end
+
+@implementation FloatingMenuButton {
+    CGPoint touchLocation;
+}
+
+- (instancetype)initWithFrame:(CGRect)frame {
+    self = [super initWithFrame:frame];
+    if (self) {
+        self.backgroundColor = [UIColor colorWithRed:0.0 green:0.0 blue:0.0 alpha:0.4]; // Qara və şəffaf
+        self.layer.cornerRadius = frame.size.width / 2.0; // Yumru (dairəvi)
+        self.clipsToBounds = YES;
+        self.layer.borderWidth = 1.5f;
+        self.layer.borderColor = [UIColor colorWithWhite:1.0 alpha:0.3].CGColor;
+    }
+    return self;
+}
+
+- (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
+    UITouch *touch = [touches anyObject];
+    touchLocation = [touch locationInView:self];
+}
+
+- (void)touchesMoved:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
+    UITouch *touch = [touches anyObject];
+    CGPoint currentLoc = [touch locationInView:self.superview];
+    self.center = CGPointMake(currentLoc.x - touchLocation.x + self.frame.size.width/2,
+                              currentLoc.y - touchLocation.y + self.frame.size.height/2);
+}
+
+@end
+
 // ============= LINKER FIX & OVERLAY INITIALIZER =============
 #ifdef __cplusplus
 extern "C" {
@@ -1008,8 +1042,30 @@ __attribute__((visibility("default"))) void ShowMenuOverlayWindow() {
             
             [window addSubview:overlay];
             [window bringSubviewToFront:overlay];
+            
+            // Qara yumru şəffaf düymənin yaradılması (Heç bir yazı yoxdur)
+            static FloatingMenuButton *floatBtn = nil;
+            if (!floatBtn) {
+                floatBtn = [[FloatingMenuButton alloc] initWithFrame:CGRectMake(100, 100, 50, 50)];
+                [floatBtn addTarget:nil action:@selector(toggleMenu:) forControlEvents:UIControlEventTouchUpInside];
+                
+                // Menyu statusunu dəyişən Action
+                class MenuActionHelper : public NSObject {
+                public:
+                    ModuleControl *ctrl;
+                    void toggleMenu(id sender) {
+                        ctrl->menuStatus = !ctrl->menuStatus;
+                    }
+                };
+                
+                static MenuActionHelper *helper = new MenuActionHelper();
+                helper->ctrl = modControl;
+                [floatBtn addTarget:helper action:@selector(toggleMenu:) forControlEvents:UIControlEventTouchUpInside];
+                
+                [window addSubview:floatBtn];
+                [window bringSubviewToFront:floatBtn];
+            }
         } else {
-            // Pəncərə hələ tam hazır deyilsə, hər 0.5 saniyədən bir təkrar yoxlayır
             dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
                 ShowMenuOverlayWindow();
             });
