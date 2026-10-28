@@ -431,8 +431,7 @@ OverlayView *overlayView;
 
 - (void)initializeImGui {
     ImGuiIO& io = ImGui::GetIO();
-    NSString *fontPath = [[NSBundle mainBundle] pathForResource:@"SourGummy-Regular" ofType:@"otf"];
-    io.Fonts->AddFontFromMemoryTTF((void *)Fontdata, Fontsize, 24.0f, NULL, io.Fonts->GetGlyphRangesChineseFull());
+    // Font yüklənməsi OverlayView içində idarə olunur
 }
 
 // ============= TAB DRAWING FUNCTIONS =============
