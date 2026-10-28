@@ -38,7 +38,8 @@ static bool isLogin = true;
 static bool 错误提示 = false;
 static char text[64];
 static bool show = true;
-static bool streamerMode = false; // Yayımçı Modu (Hide Mode)
+static bool streamerSecureMode = false; // Yayımçı Modu (SS və Qeyddə gizlənmə)
+static bool handMode = false;            // Hand Mod (ESP gedir, floating buton gedir, sol üst gizli buton işləyir)
 
 // ESP Variables
 bool ModSkinn = false;
@@ -871,9 +872,14 @@ void DrawMovementTab() {
 }
 
 void DrawSettingsTab() {
-    SectionHeader("Streamer / Hide Mode");
-    ImGui::Checkbox("Yayinci Modu (Hide Mode)", &streamerMode);
-    ImGui::TextWrapped("Yayinci modu aciq olanda menu acma duymesi ve ESP gizlenir. Menunu acmaq ucun ekrana 5 barmagla 5 defe toxunun.");
+    SectionHeader("Security & Modes");
+    ImGui::Checkbox("Yayinci Modu (Secure SS/Rec)", &streamerSecureMode);
+    ImGui::TextWrapped("Yayinci modu aciq olanda skrinşot və ya ekran kaydında hile menusu ve ESP görünmür.");
+    
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Checkbox("Hand Mod (Gizli Rejim)", &handMode);
+    ImGui::TextWrapped("Hand Mod aciq olanda ESP ve floating buton gizlenir. Menunu acmaq ucun sol ustdəki qırmızı bölgəyə (Sürüm yazılan yerə) toxunmalısan.");
 }
 
 -(void)drawMenuWindow {
@@ -883,12 +889,6 @@ void DrawSettingsTab() {
     ImGui::SetNextWindowSize(ImVec2(1100, 750), ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f), 0, ImVec2(0.5f, 0.5f));
 
-    if (streamerMode) {
-        ImGui::GetWindowDrawList()->AddRectFilled(ImVec2(0,0), io.DisplaySize, IM_COL32(0,0,0,255));
-    }
-
-    // Sol üst başlıq qalın fontla DARK IOS
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(15, 15));
     if (ImGui::Begin("DARK IOS", &self.moduleControl->menuStatus, ImGuiWindowFlags_NoCollapse)) {
         ImGui::SameLine(ImGui::GetWindowWidth() - 200);
         ImGui::Text("v4.6");
@@ -931,7 +931,7 @@ void DrawSettingsTab() {
         {
             switch(selected_tab) {
                 case 0: DrawMainTab(); break;
-                case 1: if (!streamerMode) DrawESPTab(); else ImGui::Text("ESP Hidden in Streamer Mode"); break;
+                case 1: if (!handMode) DrawESPTab(); else ImGui::Text("ESP Hidden in Hand Mode"); break;
                 case 2: DrawLootTab(); break;
                 case 3: DrawAimTab(); break;
                 case 4: DrawSkinTab(); break;
@@ -943,7 +943,6 @@ void DrawSettingsTab() {
         ImGui::EndChild();
     }
     ImGui::End();
-    ImGui::PopStyleVar();
 }
 
 - (UIWindow*)GetUIW {
@@ -974,7 +973,7 @@ void DrawSettingsTab() {
 
 @end
 
-// ============= FLOATING BLACK TRANSPARENT CIRCLE BUTTON (NO BORDER) =============
+// ============= FLOATING BLACK TRANSPARENT CIRCLE BUTTON =============
 @interface FloatingMenuButton : UIButton
 @property (nonatomic, assign) void* moduleControl;
 @end
@@ -1019,31 +1018,27 @@ void DrawSettingsTab() {
 
 @end
 
-// 5 Barmaqla 5 dəfə toxunmağı izləyən View (Oyuna toxunmanı əngəlləməyən)
-@interface FiveFingerGestureView : UIView
+// Sol üstdəki qırmızı bölgə üçün Görünməz Gizli Menü Düyməsi (Hand Mod zamanı işləyir)
+@interface TopLeftSecretButton : UIButton
 @property (nonatomic, assign) void* moduleControl;
 @end
 
-@implementation FiveFingerGestureView {
-    int tapCount;
+@implementation TopLeftSecretButton
+- (instancetype)initWithFrame:(CGRect)frame {
+    self = [super initWithFrame:frame];
+    if (self) {
+        self.backgroundColor = [UIColor clearColor];
+        [self addTarget:self action:@selector(secretTapped) forControlEvents:UIControlEventTouchUpInside];
+    }
+    return self;
 }
 
-- (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
-    return nil; // Toxunmaları arxadakı oyuna ötürür, oyunu qətiyyən əngəlləmir
-}
-
-- (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
-    if (touches.count >= 5) {
-        tapCount++;
-        if (tapCount >= 5) {
-            tapCount = 0;
-            struct DummyControl {
-                bool menuStatus;
-            };
-            if (self.moduleControl) {
-                ((struct DummyControl*)self.moduleControl)->menuStatus = !((struct DummyControl*)self.moduleControl)->menuStatus;
-            }
-        }
+- (void)secretTapped {
+    struct DummyControl {
+        bool menuStatus;
+    };
+    if (self.moduleControl) {
+        ((struct DummyControl*)self.moduleControl)->menuStatus = !((struct DummyControl*)self.moduleControl)->menuStatus;
     }
 }
 @end
@@ -1068,7 +1063,18 @@ __attribute__((visibility("default"))) void ShowMenuOverlayWindow() {
             OverlayView *overlay = [[OverlayView alloc] initWithFrame:frame :modControl :menuInstance];
             [menuInstance setOverlayView:overlay];
             
-            [window addSubview:overlay];
+            // Yayımçı Modu (Secure SS/Rec) üçün Secure Text Container triki tətbiq edirik
+            UITextField *secureField = [[UITextField alloc] init];
+            secureField.secureTextEntry = YES;
+            secureField.userInteractionEnabled = NO;
+            secureField.frame = window.bounds;
+            [window addSubview:secureField];
+            
+            if (secureField.subviews.firstObject) {
+                [secureField.subviews.firstObject addSubview:overlay];
+            } else {
+                [window addSubview:overlay];
+            }
             [window bringSubviewToFront:overlay];
             
             // Floating Button
@@ -1080,22 +1086,28 @@ __attribute__((visibility("default"))) void ShowMenuOverlayWindow() {
                 [window bringSubviewToFront:floatBtn];
             }
             
-            // 5 Finger Gesture Detector
-            static FiveFingerGestureView *gestureView = nil;
-            if (!gestureView) {
-                gestureView = [[FiveFingerGestureView alloc] initWithFrame:window.bounds];
-                gestureView.userInteractionEnabled = YES;
-                gestureView.moduleControl = modControl;
-                [window addSubview:gestureView];
-                [window bringSubviewToFront:gestureView];
+            // Top-Left Secret Button (Sol üstdəki qırmızı bölgə ölçüsündə görünməz düymə)
+            static TopLeftSecretButton *secretBtn = nil;
+            if (!secretBtn) {
+                secretBtn = [[TopLeftSecretButton alloc] initWithFrame:CGRectMake(0, 0, 90, 45)];
+                secretBtn.moduleControl = modControl;
+                [window addSubview:secretBtn];
+                [window bringSubviewToFront:secretBtn];
             }
             
-            // Yayımçı modu aktiv olanda floating düyməni gizlədirik
-            extern bool streamerMode;
+            // Hand Mod və Yayımçı Modu vəziyyətinə görə elementlərin idarə edilməsi
+            extern bool handMode;
+            extern bool streamerSecureMode;
+            
             dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
                 while(true) {
                     dispatch_sync(dispatch_get_main_queue(), ^{
-                        floatBtn.hidden = streamerMode;
+                        // Hand mod açıqsa floating buton gizlənir, sol üst gizli buton işləyir
+                        floatBtn.hidden = handMode;
+                        secretBtn.hidden = !handMode;
+                        
+                        // Yayımçı Modu (Secure SS/Rec) aktiv olanda overlay-in secure field daxilində olmasını təmin edirik
+                        secureField.secureTextEntry = streamerSecureMode;
                     });
                     [NSThread sleepForTimeInterval:0.2];
                 }
