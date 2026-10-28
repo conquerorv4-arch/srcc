@@ -417,18 +417,10 @@ void ApplyModernDarkTheme() {
 }
 
 @implementation mi
-INI* config;
 OverlayView *overlayView;
 
 - (instancetype)initWithFrame:(ModuleControl*)control {
     self.moduleControl = control;
-    
-    NSString *documentsDirectory = [NSHomeDirectory() stringByAppendingPathComponent:@"Documents"];
-    NSFileManager *fileManager = [NSFileManager defaultManager];
-    NSString *filePath = [documentsDirectory stringByAppendingPathComponent:@"dolphins.ini"];
-    if(![fileManager fileExistsAtPath:filePath]){
-        [fileManager createFileAtPath:filePath contents:[NSData data] attributes:nil];
-    }
     return [super init];
 }
 
@@ -1001,11 +993,25 @@ void DrawSettingsTab() {
 // ============= SHOW MENU OVERLAY WINDOW =============
 void ShowMenuOverlayWindow() {
     dispatch_async(dispatch_get_main_queue(), ^{
-        UIWindow *window = [[UIApplication sharedApplication] keyWindow];
+        UIWindow *window = nil;
+        for (UIWindow *tmpWindow in [UIApplication sharedApplication].windows) {
+            if (tmpWindow.isKeyWindow) {
+                window = tmpWindow;
+                break;
+            }
+        }
+        if (!window) {
+            window = [UIApplication sharedApplication].windows.firstObject;
+        }
+        
         if (window) {
             ModuleControl *control = new ModuleControl();
             mi *menu = [[mi alloc] initWithFrame:control];
-            [menu drawMenuWindow];
+            
+            OverlayView *overlay = [[OverlayView alloc] initWithFrame:window.bounds];
+            overlay.module = menu;
+            [menu setOverlayView:overlay];
+            [window addSubview:overlay];
         }
     });
 }
