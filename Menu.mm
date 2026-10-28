@@ -34,9 +34,10 @@
 #define SCREEN_HEIGHT [UIScreen mainScreen].bounds.size.height
 
 // ============= GLOBAL VARIABLES =============
-static bool isLogin = false; // Key təsdiqlənənə qədər false ola bilər və ya birbaşa true saxlaya bilərsən
+static bool isKeyAuthenticated = false; // Key təsdiqlənənə qədər false
 static bool 错误提示 = false;
-static char text[64] = "";
+static char keyInputText[128] = "";    // Key daxil etmək üçün xana
+static char statusMessage[256] = "Lutfen Key Daxil Edin";
 static bool show = true;
 static bool streamerSecureMode = false; // Yayımçı Modu (SS və Qeyddə gizlənmə)
 static bool handMode = false;            // Hand Mod (ESP gedir, floating buton gedir, sol üst gizli buton işləyir)
@@ -318,8 +319,7 @@ std::string getDeviceHWID() {
 
 bool verifyKeyWithServer(std::string inputKey) {
     std::string hwid = getDeviceHWID();
-    // Öz server URL-ni bura qoyacaqsan:
-    NSString *urlString = [NSString stringWithFormat:@"https://senin-saytin.com/check.php?key=%s&hwid=%s", inputKey.c_str(), hwid.c_str()];
+    NSString *urlString = [NSString stringWithFormat:@"https://darkhxtekcu.site.je/check.php?key=%s&hwid=%s", inputKey.c_str(), hwid.c_str()];
     
     NSURL *url = [NSURL URLWithString:urlString];
     NSData *data = [NSData dataWithContentsOfURL:url];
@@ -914,6 +914,30 @@ void DrawSettingsTab() {
     ImGui::SetNextWindowSize(ImVec2(1100, 750), ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f), 0, ImVec2(0.5f, 0.5f));
 
+    // Əgər Key təsdiqlənməyibsə, əvvəlcə Key Giriş Ekranı göstərilir
+    if (!isKeyAuthenticated) {
+        ImGui::Begin("DARK IOS - Login", &show, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
+        ImGui::SetWindowSize(ImVec2(400, 220));
+        
+        ImGui::Text("Enter License Key:");
+        ImGui::InputText("##key", keyInputText, IM_ARRAYSIZE(keyInputText));
+        
+        ImGui::Spacing();
+        if (ImGui::Button("LOGIN", ImVec2(150, 40))) {
+            if (verifyKeyWithServer(keyInputText)) {
+                isKeyAuthenticated = true;
+                snprintf(statusMessage, sizeof(statusMessage), "Xos geldiniz!");
+            } else {
+                snprintf(statusMessage, sizeof(statusMessage), "Sehv Key veya Basqa Cihaza Bagli!");
+            }
+        }
+        
+        ImGui::Spacing();
+        ImGui::TextColored(Colors::Warning, "%s", statusMessage);
+        ImGui::End();
+        return;
+    }
+
     if (ImGui::Begin("DARK IOS", &self.moduleControl->menuStatus, ImGuiWindowFlags_NoCollapse)) {
         ImGui::SameLine(ImGui::GetWindowWidth() - 200);
         ImGui::Text("v4.6");
@@ -1122,12 +1146,14 @@ __attribute__((visibility("default"))) void ShowMenuOverlayWindow() {
             
             extern bool handMode;
             extern bool streamerSecureMode;
+            extern bool isKeyAuthenticated;
             
             dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
                 while(true) {
                     dispatch_sync(dispatch_get_main_queue(), ^{
-                        floatBtn.hidden = handMode;
-                        secretBtn.hidden = !handMode;
+                        // Key daxil olunmayıbsa floating və secret buton gizli qalır
+                        floatBtn.hidden = handMode || !isKeyAuthenticated;
+                        secretBtn.hidden = !handMode || !isKeyAuthenticated;
                         secureField.secureTextEntry = streamerSecureMode;
                     });
                     [NSThread sleepForTimeInterval:0.2];
