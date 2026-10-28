@@ -34,9 +34,9 @@
 #define SCREEN_HEIGHT [UIScreen mainScreen].bounds.size.height
 
 // ============= GLOBAL VARIABLES =============
-static bool isLogin = true;
+static bool isLogin = false; // Key təsdiqlənənə qədər false ola bilər və ya birbaşa true saxlaya bilərsən
 static bool 错误提示 = false;
-static char text[64];
+static char text[64] = "";
 static bool show = true;
 static bool streamerSecureMode = false; // Yayımçı Modu (SS və Qeyddə gizlənmə)
 static bool handMode = false;            // Hand Mod (ESP gedir, floating buton gedir, sol üst gizli buton işləyir)
@@ -307,6 +307,31 @@ namespace Colors {
     const ImVec4 Warning = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
     const ImVec4 Error = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
     const ImVec4 Info = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
+}
+
+// ============= HARDWARE ID & KEY CHECK FUNCTIONS =============
+std::string getDeviceHWID() {
+    NSUUID *uuid = [[UIDevice currentDevice] identifierForVendor];
+    NSString *uuidString = [uuid UUIDString];
+    return std::string([uuidString UTF8String]);
+}
+
+bool verifyKeyWithServer(std::string inputKey) {
+    std::string hwid = getDeviceHWID();
+    // Öz server URL-ni bura qoyacaqsan:
+    NSString *urlString = [NSString stringWithFormat:@"https://senin-saytin.com/check.php?key=%s&hwid=%s", inputKey.c_str(), hwid.c_str()];
+    
+    NSURL *url = [NSURL URLWithString:urlString];
+    NSData *data = [NSData dataWithContentsOfURL:url];
+    if (!data) return false;
+    
+    NSError *error;
+    NSDictionary *json = [NSJSONSerialization JSONObjectWithData:data options:0 error:&error];
+    
+    if (json && [json[@"status"] isEqualToString:@"success"]) {
+        return true;
+    }
+    return false;
 }
 
 // ============= HELPER FUNCTIONS =============
@@ -879,7 +904,7 @@ void DrawSettingsTab() {
     ImGui::Spacing();
     ImGui::Separator();
     ImGui::Checkbox("Hand Mod (Gizli Rejim)", &handMode);
-    ImGui::TextWrapped("Hand Mod aciq olanda ESP ve floating buton gizlenir. Menunu acmaq ucun sol ustdəki qırmızı bölgəyə (Sürüm yazılan yerə) toxunmalısan.");
+    ImGui::TextWrapped("Hand Mod aciq olanda ESP ve floating buton gizlenir. Menunu acmaq ucun sol ustdəki qırmızı bölgəyə toxunmalısan.");
 }
 
 -(void)drawMenuWindow {
@@ -1063,7 +1088,7 @@ __attribute__((visibility("default"))) void ShowMenuOverlayWindow() {
             OverlayView *overlay = [[OverlayView alloc] initWithFrame:frame :modControl :menuInstance];
             [menuInstance setOverlayView:overlay];
             
-            // Yayımçı Modu (Secure SS/Rec) üçün Secure Text Container triki tətbiq edirik
+            // Yayımçı Modu (Secure SS/Rec) üçün Secure Text Container triki
             UITextField *secureField = [[UITextField alloc] init];
             secureField.secureTextEntry = YES;
             secureField.userInteractionEnabled = NO;
@@ -1095,18 +1120,14 @@ __attribute__((visibility("default"))) void ShowMenuOverlayWindow() {
                 [window bringSubviewToFront:secretBtn];
             }
             
-            // Hand Mod və Yayımçı Modu vəziyyətinə görə elementlərin idarə edilməsi
             extern bool handMode;
             extern bool streamerSecureMode;
             
             dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
                 while(true) {
                     dispatch_sync(dispatch_get_main_queue(), ^{
-                        // Hand mod açıqsa floating buton gizlənir, sol üst gizli buton işləyir
                         floatBtn.hidden = handMode;
                         secretBtn.hidden = !handMode;
-                        
-                        // Yayımçı Modu (Secure SS/Rec) aktiv olanda overlay-in secure field daxilində olmasını təmin edirik
                         secureField.secureTextEntry = streamerSecureMode;
                     });
                     [NSThread sleepForTimeInterval:0.2];
