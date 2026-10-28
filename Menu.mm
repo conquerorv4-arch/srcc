@@ -997,3 +997,20 @@ void DrawSettingsTab() {
 - (void)dealloc {}
 
 @end
+
+// ============= ADDITIONAL FIXES (INI & SHOW MENU) =============
+extern "C" {
+    typedef struct INI INI;
+    INI* ini_load(char* filename);
+}
+
+void ShowMenuOverlayWindow() {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        UIWindow *window = [[UIApplication sharedApplication] keyWindow];
+        if (window) {
+            ModuleControl *control = new ModuleControl();
+            mi *menu = [[mi alloc] initWithFrame:control];
+            [menu drawMenuWindow];
+        }
+    });
+}
