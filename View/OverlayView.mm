@@ -6,7 +6,15 @@
 #import "../Image/Iconcpp.h"
 #import <objc/runtime.h>
 
+// mi və ModuleControl siniflərinin tam tərifini burada birbaşa bildiririk ki, incomplete type xətası verməsin
 @class mi;
+class ModuleControl;
+
+// mi sinfinin metodlarını kompilyatora tanıtmaq üçün interface elanı
+@interface mi (OverlaySupport)
+- (void)setOverlayView:(OverlayView *)overlay;
+- (void)drawMenuWindow;
+@end
 
 @implementation OverlayView {
     ImFont *_espFont;
