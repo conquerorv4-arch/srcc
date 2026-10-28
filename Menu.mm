@@ -991,9 +991,9 @@ void DrawSettingsTab() {
 extern "C" {
 #endif
 
-void ShowMenuOverlayWindow() {
+__attribute__((visibility("default"))) void ShowMenuOverlayWindow() {
     dispatch_async(dispatch_get_main_queue(), ^{
-        // Overlay və Menu işə salınması
+        // Overlay və Menu pəncərəsini işə salan funksiya
     });
 }
 
