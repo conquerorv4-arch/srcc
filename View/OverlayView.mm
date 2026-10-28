@@ -6,22 +6,12 @@
 #import "../Image/Iconcpp.h"
 #import <objc/runtime.h>
 
-// mi və ModuleControl siniflərinin tam tərifini burada birbaşa bildiririk ki, incomplete type xətası verməsin
-@class mi;
-class ModuleControl;
-
-// mi sinfinin metodlarını kompilyatora tanıtmaq üçün interface elanı
-@interface mi (OverlaySupport)
-- (void)setOverlayView:(OverlayView *)overlay;
-- (void)drawMenuWindow;
-@end
-
 @implementation OverlayView {
     ImFont *_espFont;
     ImFont *_iconFont;
 }
 
-- (instancetype)initWithFrame:(CGRect)frame :(ModuleControl*)control :(mi*)menu {
+- (instancetype)initWithFrame:(CGRect)frame :(void*)control :(id)menu {
     self.moduleControl = control;    
     self.mi = menu;
 
@@ -64,7 +54,7 @@ class ModuleControl;
         ImGui::StyleColorsDarkMode();
 
         ImGui_ImplMetal_Init(self.device);
-        [self.mi setOverlayView:self];
+        [self.mi performSelector:@selector(setOverlayView:) withObject:self];
     }
     return self;
 }
@@ -75,7 +65,11 @@ class ModuleControl;
 }
 
 - (bool)ishowM {
-    return self.moduleControl->menuStatus;
+    // ModuleControl strukturunu id etdiyimiz üçün casting edirik
+    struct DummyControl {
+        bool menuStatus;
+    };
+    return ((struct DummyControl*)self.moduleControl)->menuStatus;
 }
 
 - (void)drawInMTKView:(MTKView *)view {
@@ -96,8 +90,12 @@ class ModuleControl;
         ImGui_ImplMetal_NewFrame(renderPassDescriptor);
         ImGui::NewFrame();
         
-        if (self.moduleControl->menuStatus) {
-            [self.mi drawMenuWindow];
+        struct DummyControl {
+            bool menuStatus;
+        };
+        
+        if (((struct DummyControl*)self.moduleControl)->menuStatus) {
+            [self.mi performSelector:@selector(drawMenuWindow)];
         }
    
         ImGui::Render();
@@ -119,7 +117,11 @@ class ModuleControl;
 - (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
     UIView *hitView = [super hitTest:point withEvent:event];
     
-    if (hitView == self && !self.moduleControl->menuStatus) {
+    struct DummyControl {
+        bool menuStatus;
+    };
+    
+    if (hitView == self && !((struct DummyControl*)self.moduleControl)->menuStatus) {
         return nil;
     }
     return hitView;
