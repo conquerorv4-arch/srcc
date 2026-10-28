@@ -1009,7 +1009,7 @@ void ShowMenuOverlayWindow() {
             mi *menu = [[mi alloc] initWithFrame:control];
             
             OverlayView *overlay = [[OverlayView alloc] initWithFrame:window.bounds];
-            overlay.module = menu;
+            
             [menu setOverlayView:overlay];
             [window addSubview:overlay];
         }
