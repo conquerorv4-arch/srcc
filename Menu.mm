@@ -988,6 +988,7 @@ void DrawSettingsTab() {
 
 // ============= FLOATING BLACK TRANSPARENT CIRCLE BUTTON =============
 @interface FloatingMenuButton : UIButton
+@property (nonatomic, assign) void* moduleControl;
 @end
 
 @implementation FloatingMenuButton {
@@ -997,21 +998,34 @@ void DrawSettingsTab() {
 - (instancetype)initWithFrame:(CGRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
-        self.backgroundColor = [UIColor colorWithRed:0.0 green:0.0 blue:0.0 alpha:0.4]; // Qara və şəffaf
+        self.backgroundColor = [UIColor colorWithRed:0.0 green:0.0 blue:0.0 alpha:0.4]; // Qara şəffaf
         self.layer.cornerRadius = frame.size.width / 2.0; // Yumru (dairəvi)
         self.clipsToBounds = YES;
         self.layer.borderWidth = 1.5f;
         self.layer.borderColor = [UIColor colorWithWhite:1.0 alpha:0.3].CGColor;
+        
+        [self addTarget:self action:@selector(buttonTapped) forControlEvents:UIControlEventTouchUpInside];
     }
     return self;
 }
 
+- (void)buttonTapped {
+    struct DummyControl {
+        bool menuStatus;
+    };
+    if (self.moduleControl) {
+        ((struct DummyControl*)self.moduleControl)->menuStatus = !((struct DummyControl*)self.moduleControl)->menuStatus;
+    }
+}
+
 - (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
+    [super touchesBegan:touches withEvent:event];
     UITouch *touch = [touches anyObject];
     touchLocation = [touch locationInView:self];
 }
 
 - (void)touchesMoved:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
+    [super touchesMoved:touches withEvent:event];
     UITouch *touch = [touches anyObject];
     CGPoint currentLoc = [touch locationInView:self.superview];
     self.center = CGPointMake(currentLoc.x - touchLocation.x + self.frame.size.width/2,
@@ -1043,24 +1057,11 @@ __attribute__((visibility("default"))) void ShowMenuOverlayWindow() {
             [window addSubview:overlay];
             [window bringSubviewToFront:overlay];
             
-            // Qara yumru şəffaf düymənin yaradılması (Heç bir yazı yoxdur)
+            // Qara şəffaf yumru düymə
             static FloatingMenuButton *floatBtn = nil;
             if (!floatBtn) {
                 floatBtn = [[FloatingMenuButton alloc] initWithFrame:CGRectMake(100, 100, 50, 50)];
-                [floatBtn addTarget:nil action:@selector(toggleMenu:) forControlEvents:UIControlEventTouchUpInside];
-                
-                // Menyu statusunu dəyişən Action
-                class MenuActionHelper : public NSObject {
-                public:
-                    ModuleControl *ctrl;
-                    void toggleMenu(id sender) {
-                        ctrl->menuStatus = !ctrl->menuStatus;
-                    }
-                };
-                
-                static MenuActionHelper *helper = new MenuActionHelper();
-                helper->ctrl = modControl;
-                [floatBtn addTarget:helper action:@selector(toggleMenu:) forControlEvents:UIControlEventTouchUpInside];
+                floatBtn.moduleControl = modControl;
                 
                 [window addSubview:floatBtn];
                 [window bringSubviewToFront:floatBtn];
