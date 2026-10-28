@@ -14,7 +14,6 @@
 #include "sys/mman.h"
 #include "ESP/Tools.h"
 #import <AVFoundation/AVFoundation.h>
-// #include "../JRMemory.framework/Headers/MemScan.h"
 #include <stdio.h>
 #include <stdint.h>
 #import <CoreTelephony/CTTelephonyNetworkInfo.h>
@@ -431,7 +430,6 @@ OverlayView *overlayView;
 
 - (void)initializeImGui {
     ImGuiIO& io = ImGui::GetIO();
-    // Font yüklənməsi OverlayView içində idarə olunur
 }
 
 // ============= TAB DRAWING FUNCTIONS =============
@@ -987,3 +985,10 @@ void DrawSettingsTab() {
 - (void)dealloc {}
 
 @end
+
+// ============= LINKER FIX FOR Tweak.mm =============
+extern "C" void ShowMenuOverlayWindow() {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        // Overlay və Menu işə salınması
+    });
+}
