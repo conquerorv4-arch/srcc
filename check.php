@@ -13,7 +13,6 @@ if (empty($key) || empty($hwid)) {
 
 $keys = file_exists($json_file) ? json_decode(file_get_contents($json_file), true) : [];
 if (!is_array($keys) || !isset($keys[$key])) {
-    // Key silinibse və ya yoxdursa oyundan atmaq üçün banned statusu qaytarırıq
     echo json_encode(["status" => "banned", "message" => "Key tapılmadı və ya silinib!"]);
     exit;
 }
@@ -37,12 +36,10 @@ $hwidList = isset($keyData['hwid']) ? $keyData['hwid'] : [];
 if (!is_array($hwidList)) $hwidList = [];
 
 if (in_array($hwid, $hwidList)) {
-    // Cihaz artıq qeydiyyatdadır, icazə ver
     echo json_encode(["status" => "success", "message" => "Giriş uğurludur"]);
     exit;
 }
 
-// Yeni cihazdırsa limitə baxırıq
 $maxDevices = isset($keyData['max_devices']) ? intval($keyData['max_devices']) : 1;
 if (count($hwidList) < $maxDevices) {
     $hwidList[] = $hwid;
