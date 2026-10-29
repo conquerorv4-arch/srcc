@@ -17,7 +17,7 @@
 #include "Vector3.h"
 #include "Vector2.h"
 #include "monoString.h"
-#include "SDK.hpp"
+//
 #include "Settings.h"
 #include "gui/mywings/gui.hpp"
 #include "gui/trash/hashes.hpp"
