@@ -124,12 +124,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $expire_time = $now + 86400;
         $prefix = "DARKOS-1D-";
 
+        // Normal müddətlər
         if ($duration_type == '1D') { $expire_time = $now + 86400; $prefix = "DARKOS-1D-"; }
         elseif ($duration_type == '7D') { $expire_time = $now + (7 * 86400); $prefix = "DARKOS-7D-"; }
         elseif ($duration_type == '30D') { $expire_time = $now + (30 * 86400); $prefix = "DARKOS-30D-"; }
         elseif ($duration_type == 'LIFETIME') { $expire_time = 0; $prefix = "DARKOS-LIFETIME-"; }
+        
+        // Tester müddətləri (Xüsusi prefix)
+        elseif ($duration_type == 'TEST_1D') { $expire_time = $now + 86400; $prefix = "DARKIOS-TESTERKEY-"; }
+        elseif ($duration_type == 'TEST_7D') { $expire_time = $now + (7 * 86400); $prefix = "DARKIOS-TESTERKEY-"; }
+        elseif ($duration_type == 'TEST_30D') { $expire_time = $now + (30 * 86400); $prefix = "DARKIOS-TESTERKEY-"; }
+        elseif ($duration_type == 'TEST_LIFETIME') { $expire_time = 0; $prefix = "DARKIOS-TESTERKEY-"; }
 
-        $random_part = strtoupper(bin2hex(random_bytes(4)));
+        // Tester üçün 12 simvolluq random, normal üçün 8 simvol (random_bytes(4))
+        if (strpos($duration_type, 'TEST_') !== false) {
+            $random_part = strtoupper(substr(bin2hex(random_bytes(6)), 0, 12));
+        } else {
+            $random_part = strtoupper(bin2hex(random_bytes(4)));
+        }
+        
         $key = !empty($custom_key) ? $custom_key : $prefix . $random_part;
 
         $keys_data[$key] = [
@@ -419,6 +432,11 @@ function key_time_left($v) {
                     <option value="7D">7 Günlük</option>
                     <option value="30D">30 Günlük</option>
                     <option value="LIFETIME">Sınırsız (Lifetime)</option>
+                    <option disabled>──────────</option>
+                    <option value="TEST_1D">1 Günlük (Tester)</option>
+                    <option value="TEST_7D">7 Günlük (Tester)</option>
+                    <option value="TEST_30D">30 Günlük (Tester)</option>
+                    <option value="TEST_LIFETIME">Lifetime (Tester)</option>
                 </select>
             </div>
             <div class="form-row">
@@ -527,7 +545,6 @@ function key_time_left($v) {
             var keyName = item.getAttribute('data-key');
             var noteName = item.getAttribute('data-note');
             
-            // Həm key adında, həm də qeyddə (istifadəçi adı) axtarır
             if (keyName.includes(filter) || noteName.includes(filter)) {
                 item.style.display = '';
                 visibleCount++;
@@ -536,11 +553,9 @@ function key_time_left($v) {
             }
         });
         
-        // Sayğacı yenilə
         var countEl = document.getElementById('keyCount');
         if(countEl) countEl.innerText = visibleCount + ' key';
         
-        // Heç nə tapılmasa mesaj göstər
         var noRes = document.getElementById('noResults');
         if(noRes) {
             if (visibleCount === 0 && items.length > 0) {
