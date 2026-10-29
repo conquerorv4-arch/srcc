@@ -9,37 +9,46 @@ void ShowMenuOverlayWindow();
 }
 #endif
 
-// 1. Serverdəki check.php ilə əlaqə yaradıb key yoxlayan funksiya
+// Serveri yoxlayan funksiya (Brauzer başlığı ilə - InfinityFree blokunu aşmaq üçün)
 bool verifyKey(NSString *inputKey) {
     if (!inputKey || [inputKey length] == 0) return false;
 
+    // Boşluqları təmizləyirik
+    inputKey = [inputKey stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+
     NSString *deviceHWID = [[[UIDevice currentDevice] identifierForVendor] UUIDString];
     NSString *urlString = [NSString stringWithFormat:@"https://zirvedeyim0.rf.gd/check.php?key=%@&hwid=%@", inputKey, deviceHWID];
-    NSURL *url = [NSURL URLWithString:urlString];
     
-    NSData *data = [NSData dataWithContentsOfURL:url];
-    if (!data) return false;
+    // İstəyə Safari brauzeri başlığı əlavə edirik ki, hostinq bloklamasın
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:urlString]];
+    [request setValue:@"Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148" forHTTPHeaderField:@"User-Agent"];
+    [request setTimeoutInterval:10.0];
+
+    NSError *error = nil;
+    NSURLResponse *response = nil;
+    NSData *data = [NSURLConnection sendSynchronousRequest:request returningResponse:&response error:&error];
     
-    NSError *error;
+    if (error || !data) return false;
+    
+    // Gələn cavabı JSON olaraq oxuyuruq
     NSDictionary *json = [NSJSONSerialization JSONObjectWithData:data options:0 error:&error];
-    if (error) return false;
+    if (error || !json) return false;
     
     NSString *status = json[@"status"];
     return [status isEqualToString:@"success"];
 }
 
-// 2. Key daxil etmək üçün pəncərə
+// Key daxiletmə pəncərəsi
 void showKeyInputWindow() {
     dispatch_async(dispatch_get_main_queue(), ^{
         UIWindow *window = [[UIApplication sharedApplication] keyWindow];
         UIViewController *rootVC = window.rootViewController;
         if (!rootVC) return;
 
-        // Əgər artıq bir pəncərə açıqdırsa iki dəfə açılmasının qarşısını alırıq
         if ([rootVC presentedViewController]) return;
 
         UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"DARKIOS - Key Login"
-                                                                       message:@"Lütfən admin paneldən aldığınız keyi daxil edin:"
+                                                                       message:@"Admin paneldən aldığınız keyi daxil edin:"
                                                                 preferredStyle:UIAlertControllerStyleAlert];
 
         [alert addTextFieldWithConfigurationHandler:^(UITextField *textField) {
@@ -52,10 +61,9 @@ void showKeyInputWindow() {
             NSString *enteredKey = textField.text;
 
             if (verifyKey(enteredKey)) {
-                // Giriş uğurludur! İndi sənin orijinal menyunu ekrana gətirik
+                // Giriş uğurludur! Menyunu açırıq
                 ShowMenuOverlayWindow();
                 
-                // Toxunmaların işləməsi üçün UIWindow toxunma icazəsini tənzimləyirik
                 dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
                     for (UIWindow *win in [[UIApplication sharedApplication] windows]) {
                         if (win != window) {
@@ -65,8 +73,7 @@ void showKeyInputWindow() {
                 });
 
             } else {
-                // Xəta və ya yanlış key
-                UIAlertController *errorAlert = [UIAlertController alertControllerWithTitle:@"Xəta" message:@"Yanlış key, vaxtı bitib və ya başqa cihaza bağlıdır!" preferredStyle:UIAlertControllerStyleAlert];
+                UIAlertController *errorAlert = [UIAlertController alertControllerWithTitle:@"Xəta" message:@"Yanlış key, vaxtı bitib və ya cihaz limiti dolub!" preferredStyle:UIAlertControllerStyleAlert];
                 [errorAlert addAction:[UIAlertAction actionWithTitle:@"Təkrar Cəhd Et" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
                     showKeyInputWindow();
                 }]];
@@ -79,7 +86,6 @@ void showKeyInputWindow() {
     });
 }
 
-// 3. Oyun açılan kimi menyunun avtomatik açılmasını dayandırıb, yalnız key pəncərəsini çağırırıq
 __attribute__((constructor)) static void init() {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         showKeyInputWindow();
