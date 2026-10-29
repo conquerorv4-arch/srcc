@@ -3,6 +3,7 @@ session_start();
 $admin_pass = "WEAR5555.2013DARKHXTE";
 $json_file = "keys.json";
 
+// Fayl yoxdursa yarat, amma varsa heç vaxt silmə/toxunma!
 if (!file_exists($json_file)) {
     file_put_contents($json_file, json_encode([]));
 }
@@ -10,13 +11,19 @@ if (!file_exists($json_file)) {
 $keys_data = json_decode(file_get_contents($json_file), true);
 if (!is_array($keys_data)) $keys_data = [];
 
-// Köhnə JSON strukturunu təhlükəsiz formata salırıq
+// --- KÖHNƏ KEYLƏRİN QORUNMASI (JSON Fix) ---
+// Əgər köhnə formatda gələn key varsa, onu silmirik, sadəcə strukturunu tamamlayırıq
+$data_changed = false;
 foreach ($keys_data as $k => $v) {
-    if (!isset($v['status'])) $keys_data[$k]['status'] = 'active';
-    if (!isset($v['expire'])) $keys_data[$k]['expire'] = 0;
-    if (!isset($v['max_devices'])) $keys_data[$k]['max_devices'] = 1;
-    if (!isset($v['devices']) || !is_array($v['devices'])) $keys_data[$k]['devices'] = [];
-    if (!isset($v['note'])) $keys_data[$k]['note'] = '';
+    if (!isset($v['status'])) { $keys_data[$k]['status'] = 'active'; $data_changed = true; }
+    if (!isset($v['expire'])) { $keys_data[$k]['expire'] = 0; $data_changed = true; }
+    if (!isset($v['max_devices'])) { $keys_data[$k]['max_devices'] = 1; $data_changed = true; }
+    if (!isset($v['devices']) || !is_array($v['devices'])) { $keys_data[$k]['devices'] = []; $data_changed = true; }
+    if (!isset($v['note'])) { $keys_data[$k]['note'] = ''; $data_changed = true; }
+}
+// Əgər struktur dəyişdisə, faylı yenilə (amma keyləri silmədən)
+if ($data_changed) {
+    file_put_contents($json_file, json_encode($keys_data, JSON_PRETTY_PRINT));
 }
 
 // --- Logout ---
@@ -66,9 +73,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
                 width:100%; max-width:360px; text-align:center;
                 box-shadow:0 20px 60px rgba(0,0,0,.5);
             }
-            .login-box h2{
-                margin:0 0 6px; font-size:22px; letter-spacing:1px;
-            }
+            .login-box h2{ margin:0 0 6px; font-size:22px; letter-spacing:1px; }
             .login-box .sub{color:var(--text-dim); font-size:13px; margin-bottom:24px;}
             input{
                 width:100%; padding:12px 14px; margin:8px 0 16px;
@@ -232,19 +237,40 @@ function key_time_left($v) {
         .logout-btn{color:var(--danger); border-color:rgba(239,68,68,.3);}
         .logout-btn:hover{background:rgba(239,68,68,.1);}
 
-        /* Settings Panel */
-        .settings-panel{
-            display:none; background:var(--surface); border:1px solid var(--border);
-            border-radius:14px; padding:22px; margin-bottom:20px;
-            border-left:4px solid var(--accent);
-            animation: slideDown 0.2s ease-out;
+        /* Modal Overlay & Animasiya */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 1000; opacity: 0; visibility: hidden;
+            transition: opacity 0.25s ease, visibility 0.25s ease;
         }
-        @keyframes slideDown {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        
+        .modal-content {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 14px; padding: 24px; width: 90%; max-width: 400px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+            transform: scale(0.9) translateY(20px); opacity: 0;
+            transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.25s ease;
         }
-        .settings-panel h3{margin:0 0 15px; font-size:16px; color:var(--text);}
-        .settings-panel hr{border:0; border-top:1px solid var(--border); margin:20px 0;}
+        .modal-overlay.active .modal-content { transform: scale(1) translateY(0); opacity: 1; }
+        
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-header h3 { margin: 0; font-size: 18px; color: var(--text); }
+        .modal-close { background: none; border: none; color: var(--text-dim); font-size: 24px; cursor: pointer; line-height: 1; transition: color 0.15s; padding: 0; }
+        .modal-close:hover { color: var(--text); }
+
+        /* Danger zone inside modal */
+        .danger-zone{
+            border:1px solid rgba(239,68,68,.3);
+            background:rgba(239,68,68,.05);
+            padding:16px; border-radius:10px;
+        }
+        .danger-zone h4{color:var(--danger); margin:0 0 8px; font-size:14px;}
+        .danger-zone p{color:var(--text-dim); font-size:13px; margin:0 0 14px;}
+        .btn-danger-solid{background:var(--danger) !important; width: 100%;}
+        .btn-danger-solid:hover{background:#dc2626 !important;}
 
         /* Cards */
         .card{
@@ -333,17 +359,6 @@ function key_time_left($v) {
         }
         .empty .icon{font-size:40px; margin-bottom:12px; opacity:.5;}
 
-        /* Danger zone */
-        .danger-zone{
-            border:1px solid rgba(239,68,68,.3);
-            background:rgba(239,68,68,.05);
-            padding:16px; border-radius:10px;
-        }
-        .danger-zone h4{color:var(--danger); margin:0 0 8px; font-size:14px;}
-        .danger-zone p{color:var(--text-dim); font-size:13px; margin:0 0 14px;}
-        .btn-danger-solid{background:var(--danger) !important;}
-        .btn-danger-solid:hover{background:#dc2626 !important;}
-
         .text-danger{color:var(--danger);}
         .text-dim{color:var(--text-dim);}
 
@@ -360,28 +375,9 @@ function key_time_left($v) {
     <div class="header">
         <h1><span>DARK</span> IOS Admin</h1>
         <div class="header-right">
-            <button type="button" class="settings-btn" onclick="toggleSettings()">⚙️ Ayarlar</button>
+            <button type="button" class="settings-btn" onclick="openModal()">⚙️ Ayarlar</button>
             <a href="admin.php?action=logout" class="logout-btn">Çıxış →</a>
         </div>
-    </div>
-
-    <!-- Ayarlar Paneli (Gizli Başlayır) -->
-    <div id="settingsPanel" class="settings-panel">
-        <h3>⚙️ Sistem Ayarları</h3>
-        
-        <?php if (count($keys_data) > 0): ?>
-        <div class="danger-zone">
-            <h4>⚠ Təhlükəli Zona</h4>
-            <p>Bu əməliyyat geri qaytarıla bilməz. Bütün keylər birdəfəlik silinəcək.</p>
-            <form method="POST" onsubmit="return confirm('BÜTÜN keylər silinəcək. Əminsiniz?');">
-                <button type="submit" name="delete_all" class="btn-danger-solid" style="width:100%;">Bütün Keyləri Sil</button>
-            </form>
-        </div>
-        <?php else: ?>
-            <p style="color:var(--text-dim); font-size:14px;">Hazırda silinəcək heç bir key yoxdur.</p>
-        <?php endif; ?>
-        
-        <!-- Gələcəkdə bura başqa ayarlar əlavə edilə bilər -->
     </div>
 
     <!-- Yeni key -->
@@ -452,14 +448,41 @@ function key_time_left($v) {
 
 </div>
 
+<!-- Ayarlar Modalı (Popup) -->
+<div id="settingsModal" class="modal-overlay" onclick="closeModal(event)">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <h3>⚙️ Ayarlar</h3>
+            <button type="button" class="modal-close" onclick="closeModal(event)">&times;</button>
+        </div>
+        
+        <div class="settings-body">
+            <?php if (count($keys_data) > 0): ?>
+            <div class="danger-zone">
+                <h4>⚠ Təhlükəli Zona</h4>
+                <p>Bu əməliyyat geri qaytarıla bilməz. Bütün keylər birdəfəlik silinəcək.</p>
+                <form method="POST" onsubmit="return confirm('BÜTÜN keylər silinəcək. Əminsiniz?');">
+                    <button type="submit" name="delete_all" class="btn-danger-solid">Bütün Keyləri Sil</button>
+                </form>
+            </div>
+            <?php else: ?>
+                <p style="color:var(--text-dim); font-size:14px; text-align:center; margin: 20px 0;">Hazırda silinəcək heç bir key yoxdur.</p>
+            <?php endif; ?>
+            
+            <!-- Gələcəkdə bura başqa ayarlar əlavə edilə bilər -->
+        </div>
+    </div>
+</div>
+
 <script>
-    function toggleSettings() {
-        var panel = document.getElementById('settingsPanel');
-        if (panel.style.display === 'block') {
-            panel.style.display = 'none';
-        } else {
-            panel.style.display = 'block';
-            panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    function openModal() {
+        document.getElementById('settingsModal').classList.add('active');
+    }
+
+    function closeModal(event) {
+        // Əgər klik birbaşa overlay-ə (arxa fona) və ya bağlama düyməsinə olubsa
+        if (event.target.id === 'settingsModal' || event.target.classList.contains('modal-close') || event.target.tagName === 'BUTTON') {
+            document.getElementById('settingsModal').classList.remove('active');
         }
     }
 </script>
