@@ -61,9 +61,9 @@ if (isset($_SESSION['admin_logged']) && $_SESSION['admin_logged'] === true) {
         }
         
         $keys[$new_key] = [
-            'hwid' => [], // Çoxlu cihaz üçün massiv
+            'hwid' => [],
             'max_devices' => $max_devices,
-            'status' => 'active', // active, blocked
+            'status' => 'active',
             'created' => $now, 
             'expire' => $expire_time, 
             'note' => $note
@@ -92,7 +92,7 @@ if (isset($_SESSION['admin_logged']) && $_SESSION['admin_logged'] === true) {
         exit;
     }
 
-    // HWID Sıfırlama (Reset)
+    // HWID Sıfırlama
     if (isset($_GET['reset_hwid'])) {
         $k_target = $_GET['reset_hwid'];
         if (isset($keys[$k_target])) {
@@ -120,13 +120,23 @@ if (isset($_SESSION['admin_logged']) && $_SESSION['admin_logged'] === true) {
         $k_target = $_POST['key_name'];
         $add_days = intval($_POST['add_days']);
         if (isset($keys[$k_target])) {
-            if ($keys[$k_target]['expire'] == 0) {
-                // Lifetime-dırsa toxunmuruq və ya istəsə çeviririk
-            } else {
+            if ($keys[$k_target]['expire'] > 0) {
                 $current_expire = max($keys[$k_target]['expire'], time());
                 $keys[$k_target]['expire'] = $current_expire + ($add_days * 86400);
                 file_put_contents($json_file, json_encode($keys, JSON_PRETTY_PRINT));
             }
+        }
+        header("Location: admin.php");
+        exit;
+    }
+
+    // Cihaz Limitini Dəyişmək
+    if (isset($_POST['update_limit'])) {
+        $k_target = $_POST['key_name'];
+        $new_limit = intval($_POST['new_max_devices']);
+        if (isset($keys[$k_target]) && $new_limit > 0) {
+            $keys[$k_target]['max_devices'] = $new_limit;
+            file_put_contents($json_file, json_encode($keys, JSON_PRETTY_PRINT));
         }
         header("Location: admin.php");
         exit;
@@ -143,73 +153,47 @@ if (isset($_SESSION['admin_logged']) && $_SESSION['admin_logged'] === true) {
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
-            --bg: #0a0a0f;
-            --card: #12121a;
-            --card-hover: #1a1a24;
-            --border: #23232f;
-            --text: #ffffff;
-            --text-dim: #8b8b9e;
-            --accent: #7c3aed;
-            --accent-2: #a855f7;
-            --success: #10b981;
-            --danger: #ef4444;
-            --warning: #f59e0b;
+            --bg: #0a0a0f; --card: #12121a; --card-hover: #1a1a24; --border: #23232f;
+            --text: #ffffff; --text-dim: #8b8b9e; --accent: #7c3aed; --accent-2: #a855f7;
+            --success: #10b981; --danger: #ef4444; --warning: #f59e0b;
         }
         body {
             background: var(--bg);
-            background-image: 
-                radial-gradient(ellipse at top, rgba(124, 58, 237, 0.15), transparent 50%),
-                radial-gradient(ellipse at bottom, rgba(168, 85, 247, 0.08), transparent 50%);
-            min-height: 100vh; color: var(--text);
-            font-family: 'Inter', -apple-system, sans-serif;
-            padding: 24px 16px; line-height: 1.5;
+            background-image: radial-gradient(ellipse at top, rgba(124, 58, 237, 0.15), transparent 50%), radial-gradient(ellipse at bottom, rgba(168, 85, 247, 0.08), transparent 50%);
+            min-height: 100vh; color: var(--text); font-family: 'Inter', -apple-system, sans-serif; padding: 24px 16px; line-height: 1.5;
         }
         .container { max-width: 900px; margin: 0 auto; }
-        
-        .header {
-            display: flex; align-items: center; justify-content: space-between;
-            flex-wrap: wrap; gap: 16px; margin-bottom: 28px; position: relative;
-        }
+        .header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin-bottom: 28px; position: relative; }
         .brand { display: flex; align-items: center; gap: 12px; cursor: pointer; }
         .logo {
-            width: 44px; height: 44px; border-radius: 12px;
-            background: linear-gradient(135deg, var(--accent), var(--accent-2));
-            display: flex; align-items: center; justify-content: center;
-            font-weight: 700; font-size: 18px; box-shadow: 0 8px 24px rgba(124, 58, 237, 0.4);
+            width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; box-shadow: 0 8px 24px rgba(124, 58, 237, 0.4);
             transition: transform 0.2s;
         }
         .logo:hover { transform: scale(1.05); }
         .brand h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; }
         .brand p { font-size: 12px; color: var(--text-dim); }
         
-        /* Dropdown Menu */
         .profile-menu {
-            position: absolute; top: 60px; left: 0; width: 260px;
-            background: var(--card); border: 1px solid var(--border);
-            border-radius: 14px; padding: 12px; box-shadow: 0 15px 40px rgba(0,0,0,0.6);
-            display: none; z-index: 100; animation: fadeIn 0.2s ease;
+            position: absolute; top: 60px; left: 0; width: 260px; background: var(--card); border: 1px solid var(--border);
+            border-radius: 14px; padding: 12px; box-shadow: 0 15px 40px rgba(0,0,0,0.6); display: none; z-index: 100; animation: fadeIn 0.2s ease;
         }
         .profile-menu.active { display: block; }
         .menu-item {
-            padding: 10px 14px; border-radius: 8px; font-size: 13px; color: var(--text);
-            display: flex; align-items: center; gap: 10px; cursor: pointer; text-decoration: none;
-            transition: background 0.2s;
+            padding: 10px 14px; border-radius: 8px; font-size: 13px; color: var(--text); display: flex; align-items: center; gap: 10px; cursor: pointer; text-decoration: none; transition: background 0.2s;
         }
         .menu-item:hover { background: var(--card-hover); color: var(--accent-2); }
         .menu-divider { height: 1px; background: var(--border); margin: 6px 0; }
-
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
 
         .logout-btn {
-            padding: 10px 18px; border-radius: 10px; background: transparent; color: var(--text-dim);
-            border: 1px solid var(--border); font-family: inherit; font-size: 13px; font-weight: 500;
-            cursor: pointer; text-decoration: none; transition: all 0.2s;
+            padding: 10px 18px; border-radius: 10px; background: transparent; color: var(--text-dim); border: 1px solid var(--border);
+            font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer; text-decoration: none; transition: all 0.2s;
         }
         .logout-btn:hover { background: var(--card); color: var(--danger); border-color: var(--danger); }
         
         .login-card {
-            max-width: 420px; margin: 60px auto; background: var(--card); border: 1px solid var(--border);
-            border-radius: 20px; padding: 40px 32px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            max-width: 420px; margin: 60px auto; background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 40px 32px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
         }
         .login-card h2 { font-size: 24px; margin-bottom: 8px; letter-spacing: -0.02em; }
         .login-card .subtitle { color: var(--text-dim); font-size: 14px; margin-bottom: 28px; }
@@ -217,20 +201,15 @@ if (isset($_SESSION['admin_logged']) && $_SESSION['admin_logged'] === true) {
         .form-group { margin-bottom: 16px; }
         label { display: block; font-size: 13px; font-weight: 500; color: var(--text-dim); margin-bottom: 8px; }
         input, select {
-            width: 100%; padding: 13px 16px; background: var(--bg); color: var(--text);
-            border: 1px solid var(--border); border-radius: 10px; font-family: 'JetBrains Mono', monospace; font-size: 13px;
-            transition: all 0.2s;
+            width: 100%; padding: 13px 16px; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 10px; font-family: 'JetBrains Mono', monospace; font-size: 13px; transition: all 0.2s;
         }
         input:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15); }
         input::placeholder { color: #4a4a5a; }
         
         .btn {
-            width: 100%; padding: 13px 20px; background: linear-gradient(135deg, var(--accent), var(--accent-2));
-            color: white; border: none; border-radius: 10px; font-family: inherit; font-size: 14px; font-weight: 600;
-            cursor: pointer; transition: all 0.2s; box-shadow: 0 8px 24px rgba(124, 58, 237, 0.3);
+            width: 100%; padding: 13px 20px; background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: white; border: none; border-radius: 10px; font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; box-shadow: 0 8px 24px rgba(124, 58, 237, 0.3);
         }
         .btn:hover { transform: translateY(-1px); box-shadow: 0 12px 32px rgba(124, 58, 237, 0.45); }
-        .btn.danger { background: linear-gradient(135deg, #ef4444, #dc2626); box-shadow: 0 8px 24px rgba(239, 68, 68, 0.3); }
         
         .error { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #fca5a5; padding: 12px 16px; border-radius: 10px; font-size: 13px; margin-bottom: 16px; }
         
@@ -249,23 +228,15 @@ if (isset($_SESSION['admin_logged']) && $_SESSION['admin_logged'] === true) {
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
         @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
         
-        /* Axtarış Bölməsi */
-        .search-box {
-            position: relative; margin-bottom: 16px;
-        }
-        .search-box input {
-            padding-left: 42px; font-family: 'Inter', sans-serif;
-        }
-        .search-icon {
-            position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-dim); font-size: 16px;
-        }
+        .search-box { position: relative; margin-bottom: 16px; }
+        .search-box input { padding-left: 42px; font-family: 'Inter', sans-serif; }
+        .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-dim); font-size: 16px; }
 
         .keys-section h3 { font-size: 16px; font-weight: 600; margin-bottom: 16px; font-family: 'Inter', sans-serif; }
         .keys-list { display: flex; flex-direction: column; gap: 10px; }
         
         .key-item {
-            background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px;
-            display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; transition: all 0.2s;
+            background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; transition: all 0.2s;
         }
         .key-item:hover { border-color: var(--accent); background: var(--card-hover); }
         .key-info { flex: 1; min-width: 220px; }
@@ -274,8 +245,7 @@ if (isset($_SESSION['admin_logged']) && $_SESSION['admin_logged'] === true) {
         .key-code { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; color: var(--accent-2); word-break: break-all; }
         
         .copy-btn {
-            background: rgba(124, 58, 237, 0.15); border: 1px solid rgba(124, 58, 237, 0.3); color: var(--accent-2);
-            padding: 4px 8px; border-radius: 6px; font-size: 11px; cursor: pointer; font-weight: 600; transition: all 0.2s;
+            background: rgba(124, 58, 237, 0.15); border: 1px solid rgba(124, 58, 237, 0.3); color: var(--accent-2); padding: 4px 8px; border-radius: 6px; font-size: 11px; cursor: pointer; font-weight: 600; transition: all 0.2s;
         }
         .copy-btn:hover { background: var(--accent); color: white; }
         
@@ -289,8 +259,7 @@ if (isset($_SESSION['admin_logged']) && $_SESSION['admin_logged'] === true) {
         
         .action-btns { display: flex; gap: 6px; flex-wrap: wrap; }
         .sm-btn {
-            padding: 6px 10px; border-radius: 6px; font-family: inherit; font-size: 11px; font-weight: 600;
-            cursor: pointer; transition: all 0.2s; text-decoration: none; border: 1px solid var(--border); background: var(--bg); color: var(--text);
+            padding: 6px 10px; border-radius: 6px; font-family: inherit; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.2s; text-decoration: none; border: 1px solid var(--border); background: var(--bg); color: var(--text);
         }
         .sm-btn.reset { border-color: rgba(245, 158, 11, 0.4); color: var(--warning); }
         .sm-btn.reset:hover { background: var(--warning); color: #000; }
@@ -300,25 +269,22 @@ if (isset($_SESSION['admin_logged']) && $_SESSION['admin_logged'] === true) {
         .sm-btn.delete:hover { background: var(--danger); color: white; }
         .sm-btn.extend { border-color: rgba(16, 185, 129, 0.4); color: var(--success); }
         .sm-btn.extend:hover { background: var(--success); color: white; }
+        .sm-btn.limit { border-color: rgba(168, 85, 247, 0.4); color: var(--accent-2); }
+        .sm-btn.limit:hover { background: var(--accent); color: white; }
 
         .empty { text-align: center; padding: 40px 20px; color: var(--text-dim); font-size: 14px; background: var(--card); border: 1px dashed var(--border); border-radius: 12px; }
         
-        /* Modal Style */
         .modal {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center; padding: 16px;
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center; padding: 16px;
         }
         .modal.active { display: flex; }
-        .modal-content {
-            background: var(--card); border: 1px solid var(--border); border-radius: 16px; width: 100%; max-width: 400px; padding: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.8);
-        }
+        .modal-content { background: var(--card); border: 1px solid var(--border); border-radius: 16px; width: 100%; max-width: 400px; padding: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.8); }
     </style>
 </head>
 <body>
 <div class="container">
 
 <?php if (!isset($_SESSION['admin_logged']) || $_SESSION['admin_logged'] !== true): ?>
-    
     <div class="login-card">
         <div style="text-align:center; margin-bottom:24px;">
             <div class="logo" style="margin: 0 auto 16px;">D</div>
@@ -334,7 +300,6 @@ if (isset($_SESSION['admin_logged']) && $_SESSION['admin_logged'] === true) {
             <button type="submit" class="btn">Daxil ol</button>
         </form>
     </div>
-
 <?php else: ?>
     
     <?php 
@@ -346,13 +311,12 @@ if (isset($_SESSION['admin_logged']) && $_SESSION['admin_logged'] === true) {
         $status = isset($v['status']) ? $v['status'] : 'active';
         $expire = isset($v['expire']) ? $v['expire'] : 0;
         
-        if ($status === 'blocked') {
-            // Bloklanıbsa
-        } else {
+        if ($status !== 'blocked') {
             if ($expire > 0 && $expire < time()) $expired++;
             else $active++;
         }
-        if (empty($v['hwid'])) $unused++;
+        $hwid_arr = isset($v['hwid']) ? $v['hwid'] : [];
+        if (empty($hwid_arr)) $unused++;
     }
     
     $default_rand = strtoupper(substr(bin2hex(random_bytes(10)), 0, 17));
@@ -368,7 +332,6 @@ if (isset($_SESSION['admin_logged']) && $_SESSION['admin_logged'] === true) {
             </div>
         </div>
 
-        <!-- Profil Menyusu (D ikonuna basanda açılır) -->
         <div class="profile-menu" id="profileMenu">
             <div style="font-size:11px; color:var(--text-dim); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.05em;">Sistem Menyu</div>
             <a href="admin.php?delete_all=true" class="menu-item" onclick="return confirm('DİQQƏT: Bütün keylər silinəcək! Əminsinizmi?')">🗑️ Bütün Keyləri Sil</a>
@@ -431,7 +394,6 @@ if (isset($_SESSION['admin_logged']) && $_SESSION['admin_logged'] === true) {
         </form>
     </div>
 
-    <!-- Axtarış Qutusu -->
     <div class="search-box">
         <span class="search-icon">🔍</span>
         <input type="text" id="searchInput" placeholder="Key və ya qeyd üzrə axtar..." onkeyup="searchKeys()">
@@ -467,7 +429,6 @@ if (isset($_SESSION['admin_logged']) && $_SESSION['admin_logged'] === true) {
                             $badge_class = 'danger';
                         }
                     }
-
                     $hwid_count = count($hwid);
                 ?>
                 <div class="key-item" data-search="<?= strtolower($k . ' ' . $note) ?>">
@@ -488,13 +449,12 @@ if (isset($_SESSION['admin_logged']) && $_SESSION['admin_logged'] === true) {
                         </div>
                     </div>
                     <div class="action-btns">
-                        <!-- HWID Reset -->
                         <a href="admin.php?reset_hwid=<?= urlencode($k) ?>" onclick="return confirm('Bu keyin cihaz bağlamaları (HWID) sıfırlansın?')" class="sm-btn reset" title="Cihazları Sıfırla">Reset</a>
-                        <!-- Bloklama Toggle -->
                         <a href="admin.php?toggle_status=<?= urlencode($k) ?>" class="sm-btn block"><?= ($status === 'blocked') ? 'Aç' : 'Blokla' ?></a>
-                        <!-- Vaxt Artır -->
-                        <button onclick="openExtendModal('<?= htmlspecialchars($k) ?>')" class="sm-btn extend">+ Gün</button>
-                        <!-- Sil -->
+                        <button onclick="openLimitModal('<?= htmlspecialchars($k) ?>', <?= $max_dev ?>)" class="sm-btn limit">Limit</button>
+                        <?php if ($expire > 0): ?>
+                            <button onclick="openExtendModal('<?= htmlspecialchars($k) ?>')" class="sm-btn extend">+ Gün</button>
+                        <?php endif; ?>
                         <a href="admin.php?delete=<?= urlencode($k) ?>" onclick="return confirm('Bu key silinsin?')" class="sm-btn delete">Sil</a>
                     </div>
                 </div>
@@ -523,8 +483,25 @@ if (isset($_SESSION['admin_logged']) && $_SESSION['admin_logged'] === true) {
         </div>
     </div>
 
+    <!-- Cihaz Limiti Dəyişmə Modalı -->
+    <div class="modal" id="limitModal">
+        <div class="modal-content">
+            <h3 style="margin-bottom: 14px;">Cihaz Limitini Dəyiş</h3>
+            <form method="POST">
+                <input type="hidden" name="key_name" id="limitKeyName">
+                <div class="form-group">
+                    <label>Yeni maksimum cihaz sayı:</label>
+                    <input type="number" name="new_max_devices" id="limitInputVal" min="1" max="10" required style="font-family:'Inter', sans-serif;">
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit" name="update_limit" class="btn">Yenilə</button>
+                    <button type="button" class="btn" style="background:var(--border); color:var(--text);" onclick="closeLimitModal()">Ləğv Et</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
-    // Profil menyu aç/bağla
     function toggleProfileMenu(event) {
         event.stopPropagation();
         const menu = document.getElementById('profileMenu');
@@ -534,7 +511,6 @@ if (isset($_SESSION['admin_logged']) && $_SESSION['admin_logged'] === true) {
         document.getElementById('profileMenu').classList.remove('active');
     }
 
-    // Kopyalama funksiyası
     function copyKey(elementId) {
         const text = document.getElementById(elementId).innerText;
         navigator.clipboard.writeText(text).then(() => {
@@ -542,12 +518,10 @@ if (isset($_SESSION['admin_logged']) && $_SESSION['admin_logged'] === true) {
         });
     }
 
-    // Axtarış funksiyası
     function searchKeys() {
         let input = document.getElementById('searchInput').value.toLowerCase();
         let items = document.getElementsByClassName('key-item');
         let count = 0;
-        
         for (let i = 0; i < items.length; i++) {
             let data = items[i].getAttribute('data-search');
             if (data.includes(input)) {
@@ -560,7 +534,6 @@ if (isset($_SESSION['admin_logged']) && $_SESSION['admin_logged'] === true) {
         document.getElementById('keyCount').innerText = count;
     }
 
-    // Modal idarəsi
     function openExtendModal(keyName) {
         document.getElementById('modalKeyName').value = keyName;
         document.getElementById('extendModal').classList.add('active');
@@ -569,7 +542,15 @@ if (isset($_SESSION['admin_logged']) && $_SESSION['admin_logged'] === true) {
         document.getElementById('extendModal').classList.remove('active');
     }
 
-    // Random key format
+    function openLimitModal(keyName, currentLimit) {
+        document.getElementById('limitKeyName').value = keyName;
+        document.getElementById('limitInputVal').value = currentLimit;
+        document.getElementById('limitModal').classList.add('active');
+    }
+    function closeLimitModal() {
+        document.getElementById('limitModal').classList.remove('active');
+    }
+
     function generateRandomString() {
         const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
         let result = '';
@@ -587,9 +568,7 @@ if (isset($_SESSION['admin_logged']) && $_SESSION['admin_logged'] === true) {
         input.value = `DARKOS-${val}-${randomPart}`;
     }
     </script>
-
 <?php endif; ?>
-
 </div>
 </body>
 </html>
