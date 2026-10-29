@@ -16,7 +16,7 @@ bool verifyKey(NSString *inputKey) {
     inputKey = [inputKey stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
 
     NSString *deviceHWID = [[[UIDevice currentDevice] identifierForVendor] UUIDString];
-    NSString *urlString = [NSString stringWithFormat:@"https://zirvedeyim0.rf.gd/check.php?key=%@&hwid=%@", inputKey, deviceHWID];
+    NSString *urlString = [NSString stringWithFormat:@"https://srcc-zoab.onrender.com/check.php?key=%@&hwid=%@", inputKey, deviceHWID];
     
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:urlString]];
     [request setValue:@"Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148" forHTTPHeaderField:@"User-Agent"];
@@ -31,7 +31,6 @@ bool verifyKey(NSString *inputKey) {
         return false;
     }
     
-    // Sunucudan gelen ham yanıtı konsola yazdırıyoruz
     NSString *rawResponse = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
     NSLog(@"[DARKIOS] Server Yanıtı: %@", rawResponse);
     
