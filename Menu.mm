@@ -1,6 +1,5 @@
 #import <UIKit/UIKit.h>
 #import <AVFoundation/AVFoundation.h>
-#include "PUBG/core/ue4/xor.h"
 
 extern bool menu_open;
 
@@ -31,7 +30,7 @@ extern bool menu_open;
 }
 
 - (void)initMenu { 
-    // Overlay / DrawView idarəetməsi
+    // Overlay idarəetməsi
 }
 
 - (void)toggleMenu { 
