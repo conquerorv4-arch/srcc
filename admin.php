@@ -1,4 +1,7 @@
 <?php
+error_reporting(E_ALL & ~E_WARNING & ~E_NOTICE);
+ini_set('display_errors', 0);
+
 session_start();
 $admin_pass = "WEAR5555.2013DARKHXTE";
 $json_file = 'keys.json';
@@ -20,8 +23,12 @@ if (isset($_GET['logout'])) {
 if (isset($_SESSION['admin_logged']) && $_SESSION['admin_logged'] === true) {
     if (isset($_POST['generate'])) {
         $keys = file_exists($json_file) ? json_decode(file_get_contents($json_file), true) : [];
+        if (!is_array($keys)) $keys = [];
+        
         $duration_type = $_POST['duration_type'];
         $note = htmlspecialchars($_POST['note']);
+        $custom_key = trim($_POST['custom_key']);
+        
         $expire_time = 0;
         $now = time();
         $prefix = "DARKOS-1D-";
@@ -43,8 +50,13 @@ if (isset($_SESSION['admin_logged']) && $_SESSION['admin_logged'] === true) {
             $prefix = "DARKOS-LIFETIME-"; 
         }
 
-        $random_str = strtoupper(substr(bin2hex(random_bytes(10)), 0, 17));
-        $new_key = $prefix . $random_str;
+        // Əgər istifadəçi xanaya özü key yazıbsa onu götürür, boş buraxıbsa avtomatik random yaradır
+        if (!empty($custom_key)) {
+            $new_key = htmlspecialchars($custom_key);
+        } else {
+            $random_str = strtoupper(substr(bin2hex(random_bytes(10)), 0, 17));
+            $new_key = $prefix . $random_str;
+        }
         
         $keys[$new_key] = [
             'hwid' => '', 'status' => 'unused',
@@ -58,7 +70,7 @@ if (isset($_SESSION['admin_logged']) && $_SESSION['admin_logged'] === true) {
     
     if (isset($_GET['delete'])) {
         $keys = file_exists($json_file) ? json_decode(file_get_contents($json_file), true) : [];
-        if (isset($keys[$_GET['delete']])) {
+        if (is_array($keys) && isset($keys[$_GET['delete']])) {
             unset($keys[$_GET['delete']]);
             file_put_contents($json_file, json_encode($keys, JSON_PRETTY_PRINT));
         }
@@ -105,7 +117,6 @@ if (isset($_SESSION['admin_logged']) && $_SESSION['admin_logged'] === true) {
         
         .container { max-width: 900px; margin: 0 auto; }
         
-        /* Header */
         .header {
             display: flex; align-items: center; justify-content: space-between;
             flex-wrap: wrap; gap: 16px; margin-bottom: 28px;
@@ -134,7 +145,6 @@ if (isset($_SESSION['admin_logged']) && $_SESSION['admin_logged'] === true) {
         }
         .logout-btn:hover { background: var(--card); color: var(--danger); border-color: var(--danger); }
         
-        /* Login Card */
         .login-card {
             max-width: 420px; margin: 60px auto;
             background: var(--card); border: 1px solid var(--border);
@@ -145,7 +155,6 @@ if (isset($_SESSION['admin_logged']) && $_SESSION['admin_logged'] === true) {
         .login-card h2 { font-size: 24px; margin-bottom: 8px; letter-spacing: -0.02em; }
         .login-card .subtitle { color: var(--text-dim); font-size: 14px; margin-bottom: 28px; }
         
-        /* Forms */
         .form-group { margin-bottom: 16px; }
         
         label {
@@ -186,7 +195,6 @@ if (isset($_SESSION['admin_logged']) && $_SESSION['admin_logged'] === true) {
             font-size: 13px; margin-bottom: 16px;
         }
         
-        /* Stats Grid */
         .stats {
             display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
             gap: 12px; margin-bottom: 24px;
@@ -203,7 +211,6 @@ if (isset($_SESSION['admin_logged']) && $_SESSION['admin_logged'] === true) {
         .stat-value.green { color: var(--success); }
         .stat-value.orange { color: var(--warning); }
         
-        /* Generate Card */
         .card {
             background: var(--card); border: 1px solid var(--border);
             border-radius: 16px; padding: 24px; margin-bottom: 24px;
@@ -217,11 +224,10 @@ if (isset($_SESSION['admin_logged']) && $_SESSION['admin_logged'] === true) {
             border-radius: 2px;
         }
         
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
         
         @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
         
-        /* Table */
         .keys-section h3 { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
         
         .keys-list { display: flex; flex-direction: column; gap: 10px; }
@@ -304,12 +310,16 @@ if (isset($_SESSION['admin_logged']) && $_SESSION['admin_logged'] === true) {
     
     <?php 
     $keys = file_exists($json_file) ? json_decode(file_get_contents($json_file), true) : [];
+    if (!is_array($keys)) $keys = [];
     $total = count($keys);
     $unused = 0; $active = 0; $expired = 0;
     foreach ($keys as $v) {
-        if ($v['status'] === 'unused') $unused++;
-        if ($v['expire'] > 0 && $v['expire'] < time()) $expired++;
-        if ($v['expire'] == 0 || $v['expire'] > time()) $active++;
+        $status = isset($v['status']) ? $v['status'] : 'unused';
+        $expire = isset($v['expire']) ? $v['expire'] : 0;
+        
+        if ($status === 'unused') $unused++;
+        if ($expire > 0 && $expire < time()) $expired++;
+        if ($expire == 0 || $expire > time()) $active++;
     }
     ?>
     
@@ -346,10 +356,15 @@ if (isset($_SESSION['admin_logged']) && $_SESSION['admin_logged'] === true) {
     <div class="card">
         <h3>Yeni Key Yarat</h3>
         <form method="POST">
+            <div class="form-group">
+                <label>Qeyd (istifadəçi adı)</label>
+                <input type="text" name="note" placeholder="məsələn: dark_player_01">
+            </div>
+            
             <div class="form-row">
                 <div class="form-group" style="margin-bottom:0;">
-                    <label>Qeyd (istifadəçi adı)</label>
-                    <input type="text" name="note" placeholder="məsələn: dark_player_01">
+                    <label>Key Kodu (Boş buraxsan avtomatik random gələr)</label>
+                    <input type="text" name="custom_key" placeholder="DARKOS-1D-ZA7QQV6U9U4LDAWHST">
                 </div>
                 <div class="form-group" style="margin-bottom:0;">
                     <label>Müddət</label>
@@ -370,11 +385,15 @@ if (isset($_SESSION['admin_logged']) && $_SESSION['admin_logged'] === true) {
         <div class="keys-list">
             <?php if (!empty($keys)): ?>
                 <?php foreach ($keys as $k => $v): 
-                    if ($v['expire'] == 0) {
+                    $expire = isset($v['expire']) ? $v['expire'] : 0;
+                    $note = isset($v['note']) ? $v['note'] : '';
+                    $hwid = isset($v['hwid']) ? $v['hwid'] : '';
+
+                    if ($expire == 0) {
                         $time_label = "Sınırsız";
                         $badge_class = 'success';
                     } else {
-                        $left = $v['expire'] - time();
+                        $left = $expire - time();
                         if ($left > 0) {
                             $d = floor($left / 86400);
                             $h = floor(($left % 86400) / 3600);
@@ -390,11 +409,11 @@ if (isset($_SESSION['admin_logged']) && $_SESSION['admin_logged'] === true) {
                     <div class="key-info">
                         <div class="key-code"><?= htmlspecialchars($k) ?></div>
                         <div class="key-meta">
-                            <?php if (!empty($v['note'])): ?>
-                                <span>📝 <?= htmlspecialchars($v['note']) ?></span>
+                            <?php if (!empty($note)): ?>
+                                <span>📝 <?= htmlspecialchars($note) ?></span>
                             <?php endif; ?>
                             <span class="badge <?= $badge_class ?>"><?= $time_label ?></span>
-                            <?php if (!empty($v['hwid'])): ?>
+                            <?php if (!empty($hwid)): ?>
                                 <span class="badge info">🔒 HWID bağlı</span>
                             <?php else: ?>
                                 <span class="badge info">🔓 Boş</span>
