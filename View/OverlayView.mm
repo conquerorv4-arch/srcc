@@ -1,6 +1,5 @@
 #define IMGUI_DEFINE_MATH_OPERATORS
 #define LocalPlayer g_LocalPlayer
-#import "PUBG/core/MenuLoad/DrawView.h"
 #import <UIKit/UIKit.h>
 #import <MetalKit/MetalKit.h>
 #import <Foundation/Foundation.h>
@@ -24,6 +23,15 @@
 #include "gui/trash/hashes.hpp"
 #include "gui/blur/blur.hpp"
 #include "gui/trash/bytes.hpp"
+
+// İmpove edilmiş ImGui DrawView sinfi
+@interface ImGuiDrawView : UIViewController <MTKViewDelegate>
+@property (nonatomic, strong) MTKView *mtkView;
+@property (nonatomic, strong) id<MTLDevice> device;
+@property (nonatomic, strong) id<MTLCommandQueue> commandQueue;
++ (void)showChange:(BOOL)o;
++ (BOOL)isMenuShowing;
+@end
 
 #define STR(str) ENCRYPT(str)
 using namespace ImGui;
