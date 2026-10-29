@@ -50,7 +50,6 @@ if (isset($_SESSION['admin_logged']) && $_SESSION['admin_logged'] === true) {
             $prefix = "DARKOS-LIFETIME-"; 
         }
 
-        // Əgər istifadəçi xanaya özü key yazıbsa onu götürür, boş buraxıbsa avtomatik random yaradır
         if (!empty($custom_key)) {
             $new_key = htmlspecialchars($custom_key);
         } else {
@@ -363,22 +362,32 @@ if (isset($_SESSION['admin_logged']) && $_SESSION['admin_logged'] === true) {
             
             <div class="form-row">
                 <div class="form-group" style="margin-bottom:0;">
-                    <label>Key Kodu (Boş buraxsan avtomatik random gələr)</label>
-                    <input type="text" name="custom_key" placeholder="DARKOS-1D-ZA7QQV6U9U4LDAWHST">
-                </div>
-                <div class="form-group" style="margin-bottom:0;">
                     <label>Müddət</label>
-                    <select name="duration_type">
+                    <select name="duration_type" id="durationSelect" onchange="updatePlaceholder()">
                         <option value="1D">1 Günlük (1D)</option>
                         <option value="7D">7 Günlük (7D - Həftəlik)</option>
                         <option value="30D">30 Günlük (30D)</option>
                         <option value="LIFETIME">Sınırsız (LIFETIME)</option>
                     </select>
                 </div>
+                <div class="form-group" style="margin-bottom:0;">
+                    <label>Key Kodu (Boş buraxsan avtomatik random gələr)</label>
+                    <input type="text" name="custom_key" id="customKeyInput" placeholder="DARKOS-1D-ZA7QQV6U9U4LDAWHST">
+                </div>
             </div>
             <button type="submit" name="generate" class="btn" style="margin-top:16px;">+ Key Yarat</button>
         </form>
     </div>
+
+    <script>
+    function updatePlaceholder() {
+        const select = document.getElementById('durationSelect');
+        const input = document.getElementById('customKeyInput');
+        const val = select.value;
+        const randomPart = "ZA7QQV6U9U4LDAWHST";
+        input.placeholder = `DARKOS-${val}-${randomPart}`;
+    }
+    </script>
     
     <div class="keys-section">
         <h3>Mövcud Keylər (<?= $total ?>)</h3>
