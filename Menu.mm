@@ -408,47 +408,14 @@ OverlayView *overlayView;
 }
 
 // ============= TAB DRAWING FUNCTIONS =============
-void DrawMainTab() {
-    ImGui::Text("Main Settings & Bypass");
-}
-
-void DrawESPTab() {
-    SectionHeader("Player ESP");
-    CheckboxGroup("Draw Line", &Line, "Draw Bone", &Skeleton);
-    CheckboxGroup("Draw Box 4L", &Box, "Draw Box 3D", &Box2);
-}
-
-void DrawLootTab() {
-    SectionHeader("Item ESP");
-    ImGui::Checkbox("Rifle", &步枪);
-    ImGui::Checkbox("Sniper", &狙击);
-}
-
-void DrawAimTab() {
-    SectionHeader("Aim Settings");
-    CheckboxGroup("AimBot", &AimBot, "Bullet Track 360", &Enable);
-}
-
-// Xəta verən funksiyalar əlavə olundu:
-void DrawSkinTab() {
-    SectionHeader("Skin Changer");
-    ImGui::Checkbox("Enable Skin Changer", &ModSkinn);
-}
-
-void DrawMemoryTab() {
-    SectionHeader("Memory Hacks");
-    ImGui::Checkbox("No Recoil", &NoRecoil);
-}
-
-void DrawMovementTab() {
-    SectionHeader("Movement Cheats");
-    ImGui::Checkbox("Super Jump", &SuperJump);
-}
-
-void DrawSettingsTab() {
-    SectionHeader("Settings & Security");
-    ImGui::Checkbox("Yayinci Modu", &streamerSecureMode);
-}
+void DrawMainTab() { ImGui::Text("Main Settings & Bypass"); }
+void DrawESPTab() { SectionHeader("Player ESP"); CheckboxGroup("Draw Line", &Line, "Draw Bone", &Skeleton); }
+void DrawLootTab() { SectionHeader("Item ESP"); ImGui::Checkbox("Rifle", &步枪); }
+void DrawAimTab() { SectionHeader("Aim Settings"); CheckboxGroup("AimBot", &AimBot, "Bullet Track 360", &Enable); }
+void DrawSkinTab() { SectionHeader("Skin Changer"); ImGui::Checkbox("Enable Skin Changer", &ModSkinn); }
+void DrawMemoryTab() { SectionHeader("Memory Hacks"); ImGui::Checkbox("No Recoil", &NoRecoil); }
+void DrawMovementTab() { SectionHeader("Movement Cheats"); ImGui::Checkbox("Super Jump", &SuperJump); }
+void DrawSettingsTab() { SectionHeader("Settings & Security"); ImGui::Checkbox("Yayinci Modu", &streamerSecureMode); }
 
 -(void)drawMenuWindow {
     ApplyModernDarkTheme();
@@ -621,7 +588,7 @@ extern "C" {
 #endif
 
 __attribute__((visibility("default"))) void ShowMenuOverlayWindow() {
-    dispatch_async(dispatch_get_main_queue(), ^{
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         UIWindow *window = [UIApplication sharedApplication].keyWindow;
         if (!window) {
             window = [[UIApplication sharedApplication].windows firstObject];
@@ -651,13 +618,17 @@ __attribute__((visibility("default"))) void ShowMenuOverlayWindow() {
                 while(true) {
                     dispatch_sync(dispatch_get_main_queue(), ^{
                         floatBtn.hidden = !isKeyAuthenticated;
+                        [window bringSubviewToFront:overlay];
+                        if (floatBtn && !floatBtn.hidden) {
+                            [window bringSubviewToFront:floatBtn];
+                        }
                     });
-                    [NSThread sleepForTimeInterval:0.2];
+                    [NSThread sleepForTimeInterval:0.1];
                 }
             });
             
         } else {
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
                 ShowMenuOverlayWindow();
             });
         }
