@@ -21,26 +21,19 @@
 #include "Settings.h"
 #include "SDK/SHANKS_PUBGM_Basic.hpp"
 #include "SDK/SHANKS_PUBGM_BP_STRUCT_ReturnLoadingConfig_type_structs.hpp"
+using namespace SDK;
+
 // İmpove edilmiş ImGui DrawView sinfi
-@interface ImGuiDrawView : UIViewController <MTKViewDelegate>
+@interface ImGuiDrawView : UIViewController <MTKViewDelegate> {
+    MTKView *mtkView;
+}
 @property (nonatomic, strong) MTKView *mtkView;
 @property (nonatomic, strong) id<MTLDevice> device;
 @property (nonatomic, strong) id<MTLCommandQueue> commandQueue;
-+ (void)showChange:(BOOL)o;
-+ (BOOL)isMenuShowing;
++ (void)showChange:(BOOL)arg1;
++ (BOOL)isChange;
 @end
 
-#define STR(str) ENCRYPT(str)
-using namespace ImGui;
-using namespace SDK;
-#define ALPHA (ImGuiColorEditFlags_NoTooltip|ImGuiColorEditFlags_NoInputs|ImGuiColorEditFlags_NoLabel|ImGuiColorEditFlags_AlphaBar|ImGuiColorEditFlags_InputRGB|ImGuiColorEditFlags_Float|ImGuiColorEditFlags_NoDragDrop|ImGuiColorEditFlags_PickerHueBar|ImGuiColorEditFlags_NoBorder)
-#define NO_ALPHA (ImGuiColorEditFlags_NoTooltip|ImGuiColorEditFlags_NoInputs|ImGuiColorEditFlags_NoLabel|ImGuiColorEditFlags_NoAlpha|ImGuiColorEditFlags_InputRGB|ImGuiColorEditFlags_Float|ImGuiColorEditFlags_NoDragDrop|ImGuiColorEditFlags_PickerHueBar|ImGuiColorEditFlags_NoBorder)
-
-ASTExtraPlayerCharacter* g_LocalPlayer = nullptr;
-ASTExtraPlayerController* g_PlayerController = nullptr;
-UFont* tslFont = nullptr;
-int enemyCount = 0;
-bool menu_open = false;
 
 // ============= KEY & AUTHENTICATION VARIABLES =============
 static bool isKeyAuthenticated = false; 
