@@ -5,7 +5,7 @@
 
 namespace SDK {
     struct FString {
-        PWSTR Data;
+        wchar_t* Data;
         int ArrayNum;
         int ArrayMax;
 
