@@ -12,7 +12,6 @@ $keys_data = json_decode(file_get_contents($json_file), true);
 if (!is_array($keys_data)) $keys_data = [];
 
 // --- KÖHNƏ KEYLƏRİN QORUNMASI (JSON Fix) ---
-// Əgər köhnə formatda gələn key varsa, onu silmirik, sadəcə strukturunu tamamlayırıq
 $data_changed = false;
 foreach ($keys_data as $k => $v) {
     if (!isset($v['status'])) { $keys_data[$k]['status'] = 'active'; $data_changed = true; }
@@ -21,7 +20,6 @@ foreach ($keys_data as $k => $v) {
     if (!isset($v['devices']) || !is_array($v['devices'])) { $keys_data[$k]['devices'] = []; $data_changed = true; }
     if (!isset($v['note'])) { $keys_data[$k]['note'] = ''; $data_changed = true; }
 }
-// Əgər struktur dəyişdisə, faylı yenilə (amma keyləri silmədən)
 if ($data_changed) {
     file_put_contents($json_file, json_encode($keys_data, JSON_PRETTY_PRINT));
 }
@@ -169,7 +167,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    // Ayarlar menyusundan gələn "Bütün keyləri sil" əməliyyatı
     if (isset($_POST['delete_all'])) {
         $keys_data = [];
         file_put_contents($json_file, json_encode($keys_data, JSON_PRETTY_PRINT));
@@ -223,15 +220,35 @@ function key_time_left($v) {
             display:flex; justify-content:space-between; align-items:center;
             margin-bottom:24px; flex-wrap:wrap; gap:12px;
         }
-        .header h1{font-size:20px; margin:0; letter-spacing:.5px;}
+        .header h1{font-size:20px; margin:0; letter-spacing:.5px; white-space:nowrap;}
         .header h1 span{color:var(--accent);}
-        .header-right{display:flex; gap:10px; align-items:center;}
+        .header-right{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
+        
+        /* Axtarış Qutusu */
+        .search-box {
+            position: relative;
+            display: flex; align-items: center;
+        }
+        .search-box svg {
+            position: absolute; left: 10px; width: 16px; height: 16px;
+            fill: none; stroke: var(--text-dim); stroke-width: 2;
+            stroke-linecap: round; stroke-linejoin: round;
+        }
+        .search-box input {
+            padding: 8px 12px 8px 34px; font-size: 14px;
+            background: var(--surface); border: 1px solid var(--border);
+            color: var(--text); border-radius: 8px; transition: border .15s;
+            width: 200px;
+        }
+        .search-box input:focus {
+            outline: none; border-color: var(--accent);
+        }
         
         .settings-btn, .logout-btn{
             color:var(--text-dim); text-decoration:none; font-size:14px;
             padding:8px 16px; border:1px solid var(--border);
             border-radius:8px; transition:all .15s; cursor:pointer;
-            background:var(--surface); font-family:inherit;
+            background:var(--surface); font-family:inherit; white-space:nowrap;
         }
         .settings-btn:hover{border-color:var(--accent); color:var(--accent);}
         .logout-btn{color:var(--danger); border-color:rgba(239,68,68,.3);}
@@ -366,6 +383,8 @@ function key_time_left($v) {
             .form-row > *{min-width:100%;}
             .key-meta{gap:10px; font-size:12px;}
             .actions button{flex:1; min-width:calc(50% - 4px);}
+            .search-box input { width: 120px; }
+            .header-right { width: 100%; justify-content: space-between; }
         }
     </style>
 </head>
@@ -375,6 +394,12 @@ function key_time_left($v) {
     <div class="header">
         <h1><span>DARK</span> IOS Admin</h1>
         <div class="header-right">
+            <!-- Axtarış -->
+            <div class="search-box">
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <input type="text" id="searchInput" placeholder="Axtar..." onkeyup="filterKeys()">
+            </div>
+            
             <button type="button" class="settings-btn" onclick="openModal()">⚙️ Ayarlar</button>
             <a href="admin.php?action=logout" class="logout-btn">Çıxış →</a>
         </div>
@@ -407,7 +432,7 @@ function key_time_left($v) {
     <div class="card">
         <h2>
             Mövcud Keylər
-            <span class="count"><?= count($keys_data) ?> key</span>
+            <span class="count" id="keyCount"><?= count($keys_data) ?> key</span>
         </h2>
 
         <?php if (count($keys_data) === 0): ?>
@@ -416,11 +441,17 @@ function key_time_left($v) {
                 <div>Hələ heç bir key yaratmamısınız</div>
             </div>
         <?php else: ?>
+            <div id="noResults" class="empty" style="display:none;">
+                <div class="icon">🔍</div>
+                <div>Axtarışınıza uyğun key tapılmadı</div>
+            </div>
+            
+            <div id="keysContainer">
             <?php foreach($keys_data as $k => $v): ?>
                 <?php
                     $is_banned = ($v['status'] == 'banned');
                 ?>
-                <div class="key-item">
+                <div class="key-item" data-key="<?= htmlspecialchars(strtolower($k)) ?>" data-note="<?= htmlspecialchars(strtolower($v['note'])) ?>">
                     <div class="key-head">
                         <div>
                             <span class="key-code"><?= htmlspecialchars($k) ?></span>
@@ -443,6 +474,7 @@ function key_time_left($v) {
                     </div>
                 </div>
             <?php endforeach; ?>
+            </div>
         <?php endif; ?>
     </div>
 
@@ -468,21 +500,54 @@ function key_time_left($v) {
             <?php else: ?>
                 <p style="color:var(--text-dim); font-size:14px; text-align:center; margin: 20px 0;">Hazırda silinəcək heç bir key yoxdur.</p>
             <?php endif; ?>
-            
-            <!-- Gələcəkdə bura başqa ayarlar əlavə edilə bilər -->
         </div>
     </div>
 </div>
 
 <script>
+    // Modal funksiyaları
     function openModal() {
         document.getElementById('settingsModal').classList.add('active');
     }
 
     function closeModal(event) {
-        // Əgər klik birbaşa overlay-ə (arxa fona) və ya bağlama düyməsinə olubsa
         if (event.target.id === 'settingsModal' || event.target.classList.contains('modal-close') || event.target.tagName === 'BUTTON') {
             document.getElementById('settingsModal').classList.remove('active');
+        }
+    }
+
+    // Axtarış (Filtr) funksiyası
+    function filterKeys() {
+        var input = document.getElementById('searchInput');
+        var filter = input.value.toLowerCase();
+        var items = document.querySelectorAll('.key-item');
+        var visibleCount = 0;
+        
+        items.forEach(function(item) {
+            var keyName = item.getAttribute('data-key');
+            var noteName = item.getAttribute('data-note');
+            
+            // Həm key adında, həm də qeyddə (istifadəçi adı) axtarır
+            if (keyName.includes(filter) || noteName.includes(filter)) {
+                item.style.display = '';
+                visibleCount++;
+            } else {
+                item.style.display = 'none';
+            }
+        });
+        
+        // Sayğacı yenilə
+        var countEl = document.getElementById('keyCount');
+        if(countEl) countEl.innerText = visibleCount + ' key';
+        
+        // Heç nə tapılmasa mesaj göstər
+        var noRes = document.getElementById('noResults');
+        if(noRes) {
+            if (visibleCount === 0 && items.length > 0) {
+                noRes.style.display = 'block';
+            } else {
+                noRes.style.display = 'none';
+            }
         }
     }
 </script>
