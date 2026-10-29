@@ -19,8 +19,8 @@
 #include "monoString.h"
 //
 #include "Settings.h"
-
-
+#include "../SDK/SHANKS_PUBGM_Basic.hpp"
+#include "../SDK/SHANKS_PUBGM_BP_STRUCT_ReturnLoadingConfig_type_structs.hpp"
 // İmpove edilmiş ImGui DrawView sinfi
 @interface ImGuiDrawView : UIViewController <MTKViewDelegate>
 @property (nonatomic, strong) MTKView *mtkView;
