@@ -1,6 +1,5 @@
 #define IMGUI_DEFINE_MATH_OPERATORS
 #define LocalPlayer g_LocalPlayer
-#import "API/APIClient.h"
 #import "PUBG/core/MenuLoad/DrawView.h"
 #import <UIKit/UIKit.h>
 #import <MetalKit/MetalKit.h>
@@ -51,7 +50,7 @@ std::string getDeviceHWID() {
     return std::string([uuidString UTF8String]);
 }
 
-// Serverdən Key yoxlayan funksiya
+// Render serverindən Key yoxlayan funksiya
 bool verifyKeyWithServer(std::string inputKey) {
     std::string hwid = getDeviceHWID();
     NSString *urlString = [NSString stringWithFormat:@"https://darkhxtekcu.site.je/check.php?key=%s&hwid=%s", inputKey.c_str(), hwid.c_str()];
@@ -118,7 +117,7 @@ void DrawText(AHUD* h,FString t,FVector2D p,FLinearColor c,bool cx){@try{if(h&&h
 void DrawSkeleton(AHUD* h,ASTExtraPlayerCharacter* pl,ASTExtraPlayerController* pc,UGameplayStatics* s,FLinearColor c){@try{if(!pl||!pl->Mesh)return;const char* n[]={"Head","neck_01","spine_03","spine_02","spine_01","pelvis","upperarm_r","lowerarm_r","hand_r","upperarm_l","lowerarm_l","hand_l","thigh_r","calf_r","foot_r","thigh_l","calf_l","foot_l"};FVector2D p[18];bool ok[18]={};for(int i=0;i<18;i++){FVector w=pl->GetBonePos(n[i],FVector(0,0,0));if(s->ProjectWorldToScreen(pc,w,false,&p[i]))ok[i]=true;}int conn[17][2]={{0,1},{1,2},{2,3},{3,4},{4,5},{1,6},{6,7},{7,8},{1,9},{9,10},{10,11},{5,12},{12,13},{13,14},{5,15},{15,16},{16,17}};for(auto& pr:conn)if(ok[pr[0]]&&ok[pr[1]])DrawLine(h,p[pr[0]],p[pr[1]],vis.line_width,c);}@catch(...){}}
 
 ASTExtraPlayerCharacter* FindBestTarget(float fov,float maxD,int bone,bool checkVis,bool closestFirst,FRotator& outRot){@try{if(!g_LocalPlayer||!g_PlayerController)return nullptr;std::vector<ASTExtraPlayerCharacter*>p;GetAllActorsInGame(p);ASTExtraPlayerCharacter*best=nullptr;float bestVal=FLT_MAX;FVector camLoc=GetCameraLocation(g_PlayerController);FRotator camRot=GetCameraRotation(g_PlayerController);for(auto e:p){if(!e||e->GetCurrentVehicle()||e->PlayerKey==g_LocalPlayer->PlayerKey||e->TeamID==g_LocalPlayer->TeamID||e->bDead||e->bHidden)continue;if(!vis.draw_bots&&e->bEnsure)continue;float dist=e->GetDistanceTo(g_LocalPlayer)/100.f;if(dist>maxD)continue;const char* bn=bone==0?"Head":(bone==1?"neck_01":(bone==2?"spine_03":"pelvis"));FVector bp=e->GetBonePos(bn,FVector(0,0,0));if(checkVis&&!g_PlayerController->LineOfSightTo(e,bp,true))continue;FVector dir=bp-camLoc;FRotator tr=UKismetMathLibrary::Conv_VectorToRotator(dir);NormalizeAngles(tr);float da=sqrt(pow(tr.Pitch-camRot.Pitch,2)+pow(tr.Yaw-camRot.Yaw,2));if(da>fov)continue;float val=closestFirst?dist:da;if(val<bestVal){bestVal=val;best=e;outRot=tr;}}return best;}@catch(...){return nullptr;}}
-float GetBulletSpeed(){@try{float bs=800;auto wm=g_LocalPlayer->WeaponManagerComponent;if(wm){auto cw=(ASTExtraShootWeapon*)wm->CurrentWeaponReplicated;if(cw&&cw->ShootWeaponEntityComp)bs=cw->ShootWeaponEntityComp->BulletFireSpeed;}return bs;}@catch(...){}}
+float GetBulletSpeed(){@try{float bs=800;auto wm=g_LocalPlayer->WeaponManagerComponent;if(wm){auto cw=(ASTExtraShootWeapon*)wm->CurrentWeaponReplicated;if(cw&&cw->ShootWeaponEntityComp)bs=cw->ShootWeaponEntityComp->BulletFireSpeed;}return bs;}@catch(...){800;}}
 void PredictTarget(FVector& tp,ASTExtraPlayerCharacter* t,FVector origin){@try{FVector vel=t->GetVelocity();ASTExtraVehicleBase* v=t->GetCurrentVehicle();if(v){FVector vv=v->GetVelocity();if(FVectorSize(vv)>0)vel=vv;}float bs=GetBulletSpeed();float dist=FVectorSize(tp-origin);float tt=dist/bs;tp.X+=vel.X*tt;tp.Y+=vel.Y*tt;tp.Z+=vel.Z*tt;}@catch(...){}}
 bool HasWeaponEquipped(){@try{if(!g_LocalPlayer)return false;auto wm=g_LocalPlayer->WeaponManagerComponent;if(!wm)return false;int slotVal=(int)wm->GetCurrentUsingPropSlot().GetValue();return(slotVal>=1&&slotVal<=3);}@catch(...){return false;}}
 
