@@ -8,7 +8,7 @@
 #import <sys/utsname.h>
 #include "imgui.h"
 #include "imgui_impl_metal.h"
-#include "PUBG/core/ue4/xor.h"
+#include "xor.h"
 #include <cmath>
 #include <vector>
 #include <string>
