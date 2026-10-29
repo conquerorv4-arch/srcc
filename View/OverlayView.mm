@@ -20,7 +20,6 @@
 //
 #include "Settings.h"
 #include "SDK/SHANKS_PUBGM_Basic.hpp"
-#include "SDK/SHANKS_PUBGM_Engine_classes.hpp"
 #include "SDK/SHANKS_PUBGM_BP_STRUCT_ReturnLoadingConfig_type_structs.hpp"
 using namespace SDK;
 
@@ -35,12 +34,6 @@ using namespace SDK;
 + (BOOL)isChange;
 @end
 
-
-// ============= KEY & AUTHENTICATION VARIABLES =============
-static bool isKeyAuthenticated = false; 
-static char keyInputText[128] = "";    
-static char statusMessage[256] = "Lutfen Key Daxil Edin";
-static float loginTimer = 30.0f; // 30 saniyəlik giriş taymeri
 
 // Cihazın HWID dəyərini alan funksiya
 std::string getDeviceHWID() {
