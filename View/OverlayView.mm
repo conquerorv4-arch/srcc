@@ -20,6 +20,7 @@
 //
 #include "Settings.h"
 #include "SDK/SHANKS_PUBGM_Basic.hpp"
+#include "SDK/SHANKS_PUBGM_CoreUObject_classes.hpp"
 #include "SDK/SHANKS_PUBGM_BP_STRUCT_ReturnLoadingConfig_type_structs.hpp"
 using namespace SDK;
 
