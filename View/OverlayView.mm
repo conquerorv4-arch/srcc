@@ -6,8 +6,8 @@
 #import <dlfcn.h>
 #import <mach-o/dyld.h>
 #import <sys/utsname.h>
-#include "PUBG/core/imgui/imgui.h"
-#include "PUBG/core/imgui/imgui_impl_metal.h"
+#include "imgui.h"
+#include "imgui_impl_metal.h"
 #include "PUBG/core/ue4/xor.h"
 #include <cmath>
 #include <vector>
