@@ -1,55 +1,35 @@
-#import <UIKit/UIKit.h>
-#import <AVFoundation/AVFoundation.h>
+#import <MetalKit/MetalKit.h>
+#import "imgui.h"
+#import "imgui_impl_metal.h"
+#import "Settings.h"
 
-extern bool menu_open;
+// Menyunu göstərmək/gizlətmək üçün dəyişən
+bool showMenu = true;
 
-@interface ImGuiLoad : NSObject
-+ (instancetype)share;
-- (void)initMenu;
-- (void)initTapGes;
-- (void)toggleMenu;
-- (void)handleTap:(UITapGestureRecognizer *)gesture;
-@end
+void RenderMenu() {
+    if (!showMenu) return;
 
-@implementation ImGuiLoad
-
-+ (void)load { 
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{ 
-        [[ImGuiLoad share] initMenu];
-        [[ImGuiLoad share] initTapGes]; 
-    }); 
+    ImGui::Begin("M7MD Menu", &showMenu, ImGuiWindowFlags_NoCollapse);
+    
+    // Nişanlar (Tabs) və ya bölmələr
+    if (ImGui::BeginTabBar("MenuTabs")) {
+        
+        if (ImGui::BeginTabItem("ESP")) {
+            ImGui::Checkbox("ESP Box", &Settings::ESP_Box);
+            ImGui::Checkbox("ESP Line", &Settings::ESP_Line);
+            ImGui::Checkbox("ESP Distance", &Settings::ESP_Distance);
+            ImGui::SliderFloat("Max Distance", &Settings::ESP_MaxDistance, 50.0f, 500.0f);
+            ImGui::EndTabItem();
+        }
+        
+        if (ImGui::BeginTabItem("Aimbot")) {
+            ImGui::Checkbox("Enable Aimbot", &Settings::Aimbot);
+            ImGui::SliderFloat("Aimbot FOV", &Settings::AimbotFOV, 10.0f, 300.0f);
+            ImGui::EndTabItem();
+        }
+        
+        ImGui::EndTabBar();
+    }
+    
+    ImGui::End();
 }
-
-+ (instancetype)share { 
-    static ImGuiLoad *tool; 
-    static dispatch_once_t onceToken; 
-    dispatch_once(&onceToken, ^{ 
-        tool = [[ImGuiLoad alloc] init]; 
-    }); 
-    return tool; 
-}
-
-- (void)initMenu { 
-    // Overlay idarəetməsi
-}
-
-- (void)toggleMenu { 
-    menu_open = !menu_open; 
-}
-
-- (void)initTapGes { 
-    UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleTap:)]; 
-    tap.numberOfTapsRequired = 2; 
-    tap.numberOfTouchesRequired = 2; 
-    UIWindowScene *windowScene = (UIWindowScene *)[UIApplication sharedApplication].connectedScenes.allObjects.firstObject; 
-    UIWindow *keyWindow = windowScene.windows.firstObject; 
-    [keyWindow.rootViewController.view addGestureRecognizer:tap]; 
-}
-
-- (void)handleTap:(UITapGestureRecognizer *)gesture { 
-    if (gesture.state == UIGestureRecognizerStateEnded) { 
-        [self toggleMenu]; 
-    } 
-}
-
-@end
