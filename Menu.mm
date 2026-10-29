@@ -12,8 +12,8 @@
 #import <UIKit/UIKit.h>
 
 // ============= GLOBAL VARIABLES =============
-static bool isKeyAuthenticated = false; // Key təsdiqlənənə qədər false
-static char keyInputText[128] = "";    // Key daxil etmək üçün xana
+static bool isKeyAuthenticated = false; 
+static char keyInputText[128] = "";    
 static char statusMessage[256] = "Lutfen Key Daxil Edin";
 static bool show = true;
 static bool streamerSecureMode = false;
@@ -62,11 +62,9 @@ OverlayView *overlayView;
 -(void)drawMenuWindow {
     ImGuiIO& io = ImGui::GetIO();
     
-    // Əgər Key hələ təsdiqlənməyibsə, 30 saniyəlik geri sayım ilə Key Giriş Ekranı göstərilir
+    // Əgər Key hələ təsdiqlənməyibsə, 30 saniyəlik geri sayım ilə Key Giriş Ekranı
     if (!isKeyAuthenticated) {
-        static float timeLeft = 30.0f; // 30 saniyəlik taymer
-        
-        // Hər frame-də taymeri azaldırıq
+        static float timeLeft = 30.0f; 
         timeLeft -= io.DeltaTime;
         
         ImGui::SetNextWindowSize(ImVec2(400, 240), ImGuiCond_Always);
@@ -78,10 +76,8 @@ OverlayView *overlayView;
         ImGui::InputText("##key", keyInputText, IM_ARRAYSIZE(keyInputText));
         
         ImGui::Spacing();
-        // Geri sayımı ekranda göstəririk
         ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.0f, 1.0f), "Avtomatik cixis: %.0f saniye", timeLeft);
         
-        // Vaxt 0 olduqda heç nə yazılmayıbsa oyun bağlanır (crash)
         if (timeLeft <= 0.0f) {
             exit(0);
         }
@@ -90,7 +86,8 @@ OverlayView *overlayView;
         if (ImGui::Button("LOGIN", ImVec2(150, 40))) {
             if (verifyKeyWithServer(keyInputText)) {
                 isKeyAuthenticated = true;
-                snprintf(statusMessage, sizeof(statusMessage), "Xos geldiniz!");
+                // Key uğurlu olanda menyunu avtomatik açılması üçün true edirik
+                self.moduleControl->menuStatus = true;
             } else {
                 snprintf(statusMessage, sizeof(statusMessage), "Sehv Key veya Basqa Cihaza Bagli!");
             }
@@ -102,12 +99,17 @@ OverlayView *overlayView;
         return;
     }
 
-    // --- YENİ DARK IOS MENÜ DİZAYNI ---
+    // Əgər menyu bağlıdırsa heç nə çəkmirik
+    if (!self.moduleControl->menuStatus) {
+        return;
+    }
+
+    // --- DARK IOS MENÜ DİZAYNI ---
     ImGui::SetNextWindowSize(ImVec2(1000, 600), ImGuiCond_Once);
     ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f), ImGuiCond_FirstUseEver, ImVec2(0.5f, 0.5f));
     
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
-    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.05f, 0.06f, 0.08f, 1.0f)); // Tünd göy-qara fon
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.05f, 0.06f, 0.08f, 1.0f)); 
     ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.1f, 0.1f, 0.1f, 1.0f));
 
     if (ImGui::Begin("DARK IOS", &self.moduleControl->menuStatus, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize)) {
@@ -120,9 +122,7 @@ OverlayView *overlayView;
             ImGui::TextColored(ImVec4(1.0f, 1.0f, 1.0f, 1.0f), "DARK IOS");
             ImGui::Spacing(); ImGui::Spacing();
 
-            // Aimbot Kateqoriyası
             ImGui::TextColored(ImVec4(0.4f, 0.4f, 0.4f, 1.0f), "  Aimbot");
-            
             ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.2f, 0.4f, 0.8f, 1.0f));
             ImGui::Selectable("  Aim Bot", true);
             ImGui::PopStyleColor();
@@ -132,20 +132,17 @@ OverlayView *overlayView;
             
             ImGui::Spacing(); ImGui::Spacing();
 
-            // Visuals Kateqoriyası
             ImGui::TextColored(ImVec4(0.4f, 0.4f, 0.4f, 1.0f), "  Visuals");
             ImGui::Selectable("  Players");
             ImGui::Selectable("  World");
 
             ImGui::Spacing(); ImGui::Spacing();
 
-            // Scripts Kateqoriyası
             ImGui::TextColored(ImVec4(0.4f, 0.4f, 0.4f, 1.0f), "  Scripts");
             ImGui::Selectable("  Scripts");
 
             ImGui::Spacing(); ImGui::Spacing();
 
-            // Miscellaneous
             ImGui::TextColored(ImVec4(0.4f, 0.4f, 0.4f, 1.0f), "  Miscellaneous");
             ImGui::Selectable("  Main");
 
@@ -153,7 +150,7 @@ OverlayView *overlayView;
         
         ImGui::SameLine();
 
-        // --- SAĞ PANEL (ƏSAS MƏZMUN) ---
+        // --- SAĞ PANEL ---
         ImGui::BeginChild("MainContent", ImVec2(0, 0), false);
             
             ImGui::Spacing();
@@ -163,10 +160,8 @@ OverlayView *overlayView;
             ImGui::Separator();
             ImGui::Spacing();
 
-            // 2 Sütunlu Grid
             ImGui::Columns(2, "SettingsGrid", true);
 
-            // 1-ci Sütun
             ImGui::BeginChild("MovementBox", ImVec2(0, 250), true);
                 ImGui::TextColored(ImVec4(0.6f, 0.6f, 0.6f, 1.0f), "Movement");
                 ImGui::Separator();
@@ -187,7 +182,6 @@ OverlayView *overlayView;
 
             ImGui::NextColumn();
 
-            // 2-ci Sütun
             ImGui::BeginChild("CombatBox", ImVec2(0, 250), true);
                 ImGui::TextColored(ImVec4(0.6f, 0.6f, 0.6f, 1.0f), "Combat");
                 ImGui::Separator();
@@ -234,7 +228,7 @@ OverlayView *overlayView;
 
 @end
 
-// ============= FLOATING BUTTON & OVERLAY INITIALIZER =============
+// ============= FLOATING BUTTON =============
 @interface FloatingMenuButton : UIButton
 @property (nonatomic, assign) void* moduleControl;
 @end
@@ -246,7 +240,7 @@ OverlayView *overlayView;
 - (instancetype)initWithFrame:(CGRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
-        self.backgroundColor = [UIColor colorWithRed:0.0 green:0.0 blue:0.0 alpha:0.5];
+        self.backgroundColor = [UIColor colorWithRed:0.0 green:0.0 blue:0.0 alpha:0.6];
         self.layer.cornerRadius = frame.size.width / 2.0;
         self.clipsToBounds = YES;
         [self addTarget:self action:@selector(buttonTapped) forControlEvents:UIControlEventTouchUpInside];
@@ -313,6 +307,7 @@ __attribute__((visibility("default"))) void ShowMenuOverlayWindow() {
             dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
                 while(true) {
                     dispatch_sync(dispatch_get_main_queue(), ^{
+                        // Key daxil olunana qədər düymə gizli qalır, daxil olandan sonra görünür
                         floatBtn.hidden = !isKeyAuthenticated;
                     });
                     [NSThread sleepForTimeInterval:0.2];
