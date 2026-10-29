@@ -1,7 +1,7 @@
 #import <UIKit/UIKit.h>
-#include "PUBG/core/MenuLoad/Includes.h"
 #import <AVFoundation/AVFoundation.h>
 #import "API/APIClient.h"
+#import "PUBG/core/MenuLoad/DrawView.h"
 #include "PUBG/core/ue4/xor.h"
 
 #define TOKEN ENCRYPT("wZ3Q/xYPjTIWo5gRdA5jLfamO6POk7SjBPQALRXHafuNi0nwolEDstMEOrlEsxHyiUUj4M/7hRwYD6VApIf9c3kkgQYy6dWE/B69+eT5F0g=")
