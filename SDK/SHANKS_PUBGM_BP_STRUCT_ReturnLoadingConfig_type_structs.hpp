@@ -1,10 +1,11 @@
 #pragma once
 
-#include "SHANKS_PUBGM_Basic.hpp"
-
-namespace SDK {
-    // ReturnLoadingConfig strukturu
-    struct FReturnLoadingConfig {
-        // Lazımi sahələr buraya əlavə oluna bilər
-    };
+namespace Settings {
+    inline bool ESP_Box = true;
+    inline bool ESP_Line = false;
+    inline bool ESP_Distance = true;
+    inline float ESP_MaxDistance = 300.0f;
+    
+    inline bool Aimbot = false;
+    inline float AimbotFOV = 100.0f;
 }
