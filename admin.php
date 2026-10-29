@@ -2,14 +2,27 @@
 session_start();
 $admin_pass = "WEAR5555.2013DARKHXTE";
 $json_file = "keys.json";
+$backup_file = "keys_backup.json"; // Ehtiyat yaddaş
 
-// Fayl yoxdursa yarat, amma varsa heç vaxt silmə/toxunma!
+// --- SİSTEMİN QORUNMASI (BACKUP SİSTEMİ) ---
+if (!file_exists($json_file) && file_exists($backup_file)) {
+    copy($backup_file, $json_file);
+}
+
 if (!file_exists($json_file)) {
     file_put_contents($json_file, json_encode([]));
 }
 
 $keys_data = json_decode(file_get_contents($json_file), true);
 if (!is_array($keys_data)) $keys_data = [];
+
+if (empty($keys_data) && file_exists($backup_file)) {
+    $backup_data = json_decode(file_get_contents($backup_file), true);
+    if (is_array($backup_data) && count($backup_data) > 0) {
+        $keys_data = $backup_data;
+        file_put_contents($json_file, json_encode($keys_data, JSON_PRETTY_PRINT));
+    }
+}
 
 // --- KÖHNƏ KEYLƏRİN QORUNMASI (JSON Fix) ---
 $data_changed = false;
@@ -22,6 +35,7 @@ foreach ($keys_data as $k => $v) {
 }
 if ($data_changed) {
     file_put_contents($json_file, json_encode($keys_data, JSON_PRETTY_PRINT));
+    file_put_contents($backup_file, json_encode($keys_data, JSON_PRETTY_PRINT));
 }
 
 // --- Logout ---
@@ -53,10 +67,10 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <style>
             :root{
-                --bg:#0a0a0f; --surface:#15151f; --surface-2:#1e1e2a;
-                --border:#2a2a3a; --text:#e4e4e7; --text-dim:#8b8b9e;
-                --accent:#7c5cff; --accent-hover:#6b4ce6;
-                --danger:#ef4444;
+                --bg:#0f111a; --surface:#181b26; --surface-2:#222635;
+                --border:#2e3345; --text:#f1f2f6; --text-dim:#9095a8;
+                --accent:#6d5dfc; --accent-hover:#5b4bdf;
+                --danger:#ff4757;
             }
             *{box-sizing:border-box}
             body{
@@ -67,31 +81,31 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
             }
             .login-box{
                 background:var(--surface); padding:36px 30px;
-                border:1px solid var(--border); border-radius:14px;
+                border:1px solid var(--border); border-radius:16px;
                 width:100%; max-width:360px; text-align:center;
-                box-shadow:0 20px 60px rgba(0,0,0,.5);
+                box-shadow:0 20px 50px rgba(0,0,0,.4);
             }
-            .login-box h2{ margin:0 0 6px; font-size:22px; letter-spacing:1px; }
+            .login-box h2{ margin:0 0 6px; font-size:22px; letter-spacing:1px; color:#fff;}
             .login-box .sub{color:var(--text-dim); font-size:13px; margin-bottom:24px;}
             input{
                 width:100%; padding:12px 14px; margin:8px 0 16px;
                 background:var(--surface-2); border:1px solid var(--border);
                 color:var(--text); border-radius:8px; font-size:14px;
-                transition:border .15s;
+                transition:border .2s;
             }
             input:focus{outline:none; border-color:var(--accent);}
             button{
                 width:100%; padding:12px; background:var(--accent);
                 color:#fff; border:none; font-weight:600; font-size:14px;
                 border-radius:8px; cursor:pointer; letter-spacing:.5px;
-                transition:background .15s;
+                transition:background .2s;
             }
             button:hover{background:var(--accent-hover);}
             .error{
                 color:var(--danger); font-size:13px;
-                background:rgba(239,68,68,.1); padding:10px;
+                background:rgba(255,71,87,.1); padding:10px;
                 border-radius:8px; margin-bottom:16px;
-                border:1px solid rgba(239,68,68,.3);
+                border:1px solid rgba(255,71,87,.3);
             }
         </style>
     </head>
@@ -124,19 +138,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $expire_time = $now + 86400;
         $prefix = "DARKOS-1D-";
 
-        // Normal müddətlər
         if ($duration_type == '1D') { $expire_time = $now + 86400; $prefix = "DARKOS-1D-"; }
         elseif ($duration_type == '7D') { $expire_time = $now + (7 * 86400); $prefix = "DARKOS-7D-"; }
         elseif ($duration_type == '30D') { $expire_time = $now + (30 * 86400); $prefix = "DARKOS-30D-"; }
         elseif ($duration_type == 'LIFETIME') { $expire_time = 0; $prefix = "DARKOS-LIFETIME-"; }
         
-        // Tester müddətləri (Xüsusi prefix)
         elseif ($duration_type == 'TEST_1D') { $expire_time = $now + 86400; $prefix = "DARKIOS-TESTERKEY-"; }
         elseif ($duration_type == 'TEST_7D') { $expire_time = $now + (7 * 86400); $prefix = "DARKIOS-TESTERKEY-"; }
         elseif ($duration_type == 'TEST_30D') { $expire_time = $now + (30 * 86400); $prefix = "DARKIOS-TESTERKEY-"; }
         elseif ($duration_type == 'TEST_LIFETIME') { $expire_time = 0; $prefix = "DARKIOS-TESTERKEY-"; }
 
-        // Tester üçün 12 simvolluq random, normal üçün 8 simvol (random_bytes(4))
         if (strpos($duration_type, 'TEST_') !== false) {
             $random_part = strtoupper(substr(bin2hex(random_bytes(6)), 0, 12));
         } else {
@@ -154,6 +165,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ];
 
         file_put_contents($json_file, json_encode($keys_data, JSON_PRETTY_PRINT));
+        file_put_contents($backup_file, json_encode($keys_data, JSON_PRETTY_PRINT));
+        
         header("Location: admin.php");
         exit;
     }
@@ -174,7 +187,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } elseif ($act == 'limit_inc') {
                 $keys_data[$k]['max_devices']++;
             }
+            
             file_put_contents($json_file, json_encode($keys_data, JSON_PRETTY_PRINT));
+            file_put_contents($backup_file, json_encode($keys_data, JSON_PRETTY_PRINT));
         }
         header("Location: admin.php");
         exit;
@@ -183,6 +198,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['delete_all'])) {
         $keys_data = [];
         file_put_contents($json_file, json_encode($keys_data, JSON_PRETTY_PRINT));
+        file_put_contents($backup_file, json_encode($keys_data, JSON_PRETTY_PRINT));
         header("Location: admin.php");
         exit;
     }
@@ -215,10 +231,18 @@ function key_time_left($v) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         :root{
-            --bg:#0a0a0f; --surface:#15151f; --surface-2:#1e1e2a;
-            --border:#2a2a3a; --text:#e4e4e7; --text-dim:#8b8b9e;
-            --accent:#7c5cff; --accent-hover:#6b4ce6;
-            --success:#22c55e; --danger:#ef4444; --warning:#f59e0b;
+            /* Yeni Rəng Palitrası */
+            --bg:#0f111a; 
+            --surface:#181b26; 
+            --surface-2:#222635;
+            --border:#2e3345; 
+            --text:#f1f2f6; 
+            --text-dim:#9095a8;
+            --accent:#6d5dfc; 
+            --accent-hover:#5b4bdf;
+            --success:#2ecc71; 
+            --danger:#ff4757; 
+            --warning:#ffa502;
         }
         *{box-sizing:border-box}
         body{
@@ -233,7 +257,7 @@ function key_time_left($v) {
             display:flex; justify-content:space-between; align-items:center;
             margin-bottom:24px; flex-wrap:wrap; gap:12px;
         }
-        .header h1{font-size:20px; margin:0; letter-spacing:.5px; white-space:nowrap;}
+        .header h1{font-size:20px; margin:0; letter-spacing:.5px; white-space:nowrap; color:#fff;}
         .header h1 span{color:var(--accent);}
         .header-right{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
         
@@ -250,7 +274,7 @@ function key_time_left($v) {
         .search-box input {
             padding: 8px 12px 8px 34px; font-size: 14px;
             background: var(--surface); border: 1px solid var(--border);
-            color: var(--text); border-radius: 8px; transition: border .15s;
+            color: var(--text); border-radius: 8px; transition: border .2s;
             width: 200px;
         }
         .search-box input:focus {
@@ -260,17 +284,17 @@ function key_time_left($v) {
         .settings-btn, .logout-btn{
             color:var(--text-dim); text-decoration:none; font-size:14px;
             padding:8px 16px; border:1px solid var(--border);
-            border-radius:8px; transition:all .15s; cursor:pointer;
+            border-radius:8px; transition:all .2s; cursor:pointer;
             background:var(--surface); font-family:inherit; white-space:nowrap;
         }
         .settings-btn:hover{border-color:var(--accent); color:var(--accent);}
-        .logout-btn{color:var(--danger); border-color:rgba(239,68,68,.3);}
-        .logout-btn:hover{background:rgba(239,68,68,.1);}
+        .logout-btn{color:var(--danger); border-color:rgba(255,71,87,.2);}
+        .logout-btn:hover{background:rgba(255,71,87,.1); border-color:rgba(255,71,87,.4);}
 
         /* Modal Overlay & Animasiya */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px);
+            background: rgba(10, 11, 18, 0.8); backdrop-filter: blur(5px);
             display: flex; justify-content: center; align-items: center;
             z-index: 1000; opacity: 0; visibility: hidden;
             transition: opacity 0.25s ease, visibility 0.25s ease;
@@ -279,8 +303,8 @@ function key_time_left($v) {
         
         .modal-content {
             background: var(--surface); border: 1px solid var(--border);
-            border-radius: 14px; padding: 24px; width: 90%; max-width: 400px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+            border-radius: 16px; padding: 24px; width: 90%; max-width: 400px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
             transform: scale(0.9) translateY(20px); opacity: 0;
             transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.25s ease;
         }
@@ -288,29 +312,30 @@ function key_time_left($v) {
         
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .modal-header h3 { margin: 0; font-size: 18px; color: var(--text); }
-        .modal-close { background: none; border: none; color: var(--text-dim); font-size: 24px; cursor: pointer; line-height: 1; transition: color 0.15s; padding: 0; }
+        .modal-close { background: none; border: none; color: var(--text-dim); font-size: 24px; cursor: pointer; line-height: 1; transition: color 0.2s; padding: 0; }
         .modal-close:hover { color: var(--text); }
 
         /* Danger zone inside modal */
         .danger-zone{
-            border:1px solid rgba(239,68,68,.3);
-            background:rgba(239,68,68,.05);
+            border:1px solid rgba(255,71,87,.2);
+            background:rgba(255,71,87,.05);
             padding:16px; border-radius:10px;
         }
         .danger-zone h4{color:var(--danger); margin:0 0 8px; font-size:14px;}
         .danger-zone p{color:var(--text-dim); font-size:13px; margin:0 0 14px;}
         .btn-danger-solid{background:var(--danger) !important; width: 100%;}
-        .btn-danger-solid:hover{background:#dc2626 !important;}
+        .btn-danger-solid:hover{background:#e8414f !important;}
 
         /* Cards */
         .card{
             background:var(--surface); border:1px solid var(--border);
-            border-radius:14px; padding:22px; margin-bottom:20px;
+            border-radius:16px; padding:22px; margin-bottom:20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
         .card h2{
             margin:0 0 18px; font-size:16px; font-weight:600;
             display:flex; align-items:center; justify-content:space-between;
-            flex-wrap:wrap; gap:8px;
+            flex-wrap:wrap; gap:8px; color:#fff;
         }
         .card h2 .count{
             font-size:12px; color:var(--text-dim); font-weight:400;
@@ -323,65 +348,65 @@ function key_time_left($v) {
         input, select{
             width:100%; padding:11px 14px; background:var(--surface-2);
             border:1px solid var(--border); color:var(--text);
-            border-radius:8px; font-size:14px; transition:border .15s;
+            border-radius:8px; font-size:14px; transition:border .2s;
         }
         input:focus, select:focus{outline:none; border-color:var(--accent);}
         input::placeholder{color:var(--text-dim);}
         button{
             padding:11px 20px; background:var(--accent); color:#fff;
             border:none; font-weight:600; font-size:14px; border-radius:8px;
-            cursor:pointer; transition:background .15s;
+            cursor:pointer; transition:background .2s;
         }
         button:hover{background:var(--accent-hover);}
-        .btn-block{width:100%; margin-top:4px;}
+        .btn-block{width:100%; margin-top:4px; padding:12px; font-size:15px;}
 
         /* Key list */
         .key-item{
             background:var(--surface-2); border:1px solid var(--border);
-            border-radius:10px; padding:16px; margin-bottom:12px;
-            transition:border .15s;
+            border-radius:12px; padding:16px; margin-bottom:12px;
+            transition:border .2s, transform .1s;
         }
-        .key-item:hover{border-color:#3a3a4a;}
+        .key-item:hover{border-color:#3f455c;}
         .key-head{
             display:flex; justify-content:space-between; align-items:flex-start;
             gap:12px; margin-bottom:10px; flex-wrap:wrap;
         }
         .key-code{
             font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
-            font-size:14px; font-weight:600; color:var(--text);
+            font-size:14px; font-weight:600; color:#fff;
             word-break:break-all;
         }
         .key-note{color:var(--accent); font-size:13px; margin-left:6px; font-weight:400;}
         .key-meta{
             display:flex; gap:16px; flex-wrap:wrap;
-            font-size:13px; color:var(--text-dim); margin-bottom:12px;
+            font-size:13px; color:var(--text-dim); margin-bottom:14px;
         }
         .key-meta strong{color:var(--text); font-weight:500;}
 
         /* Badges */
         .badge{
-            display:inline-block; padding:3px 10px; border-radius:20px;
+            display:inline-block; padding:4px 10px; border-radius:20px;
             font-size:12px; font-weight:500;
         }
-        .badge-success{background:rgba(34,197,94,.15); color:var(--success);}
-        .badge-danger{background:rgba(239,68,68,.15); color:var(--danger);}
-        .badge-muted{background:rgba(139,139,158,.15); color:var(--text-dim);}
-        .badge-accent{background:rgba(124,92,255,.15); color:var(--accent);}
+        .badge-success{background:rgba(46,204,113,.15); color:var(--success);}
+        .badge-danger{background:rgba(255,71,87,.15); color:var(--danger);}
+        .badge-muted{background:rgba(144,149,168,.15); color:var(--text-dim);}
+        .badge-accent{background:rgba(109,93,252,.15); color:var(--accent);}
 
         /* Actions */
         .actions{display:flex; gap:8px; flex-wrap:wrap;}
         .actions button{
             padding:7px 12px; font-size:12px; font-weight:500;
             background:var(--surface); border:1px solid var(--border);
-            color:var(--text);
+            color:var(--text); border-radius:6px;
         }
-        .actions button:hover{background:var(--surface-2); border-color:#3a3a4a;}
-        .actions .btn-warning{color:var(--warning); border-color:rgba(245,158,11,.3);}
-        .actions .btn-warning:hover{background:rgba(245,158,11,.1);}
-        .actions .btn-danger{color:var(--danger); border-color:rgba(239,68,68,.3);}
-        .actions .btn-danger:hover{background:rgba(239,68,68,.1);}
-        .actions .btn-success{color:var(--success); border-color:rgba(34,197,94,.3);}
-        .actions .btn-success:hover{background:rgba(34,197,94,.1);}
+        .actions button:hover{background:var(--surface-2); border-color:#3f455c;}
+        .actions .btn-warning{color:var(--warning); border-color:rgba(255,165,2,.2);}
+        .actions .btn-warning:hover{background:rgba(255,165,2,.1); border-color:rgba(255,165,2,.4);}
+        .actions .btn-danger{color:var(--danger); border-color:rgba(255,71,87,.2);}
+        .actions .btn-danger:hover{background:rgba(255,71,87,.1); border-color:rgba(255,71,87,.4);}
+        .actions .btn-success{color:var(--success); border-color:rgba(46,204,113,.2);}
+        .actions .btn-success:hover{background:rgba(46,204,113,.1); border-color:rgba(46,204,113,.4);}
 
         /* Empty state */
         .empty{
@@ -523,7 +548,6 @@ function key_time_left($v) {
 </div>
 
 <script>
-    // Modal funksiyaları
     function openModal() {
         document.getElementById('settingsModal').classList.add('active');
     }
@@ -534,7 +558,6 @@ function key_time_left($v) {
         }
     }
 
-    // Axtarış (Filtr) funksiyası
     function filterKeys() {
         var input = document.getElementById('searchInput');
         var filter = input.value.toLowerCase();
