@@ -1,12 +1,11 @@
 #import <UIKit/UIKit.h>
 #import <AVFoundation/AVFoundation.h>
-#import "PUBG/core/MenuLoad/DrawView.h"
 #include "PUBG/core/ue4/xor.h"
 
 extern bool menu_open;
 
-@interface ImGuiLoad()
-@property (nonatomic, strong) ImGuiDrawView *vna;
+@interface ImGuiLoad : NSObject
++ (instancetype)share;
 - (void)initMenu;
 - (void)initTapGes;
 - (void)toggleMenu;
@@ -31,29 +30,12 @@ extern bool menu_open;
     return tool; 
 }
 
-- (void)show { 
-    [self initMenu]; 
-    _vna.view.hidden = NO; 
-    menu_open = true; 
-}
-
 - (void)initMenu { 
-    if (!_vna) { 
-        _vna = [[ImGuiDrawView alloc] init]; 
-        _vna.view.frame = [UIScreen mainScreen].bounds; 
-        _vna.view.userInteractionEnabled = YES; 
-        _vna.view.backgroundColor = [UIColor clearColor]; 
-        UIWindowScene *windowScene = (UIWindowScene *)[UIApplication sharedApplication].connectedScenes.allObjects.firstObject; 
-        UIWindow *keyWindow = windowScene.windows.firstObject; 
-        [keyWindow.rootViewController.view addSubview:_vna.view]; 
-        _vna.view.hidden = YES; 
-        menu_open = false; 
-    } 
+    // Overlay / DrawView idarəetməsi
 }
 
 - (void)toggleMenu { 
-    _vna.view.hidden = !_vna.view.hidden; 
-    menu_open = !_vna.view.hidden; 
+    menu_open = !menu_open; 
 }
 
 - (void)initTapGes { 
