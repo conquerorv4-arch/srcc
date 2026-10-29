@@ -19,10 +19,7 @@
 #include "monoString.h"
 //
 #include "Settings.h"
-#include "gui/mywings/gui.hpp"
-#include "gui/trash/hashes.hpp"
-#include "gui/blur/blur.hpp"
-#include "gui/trash/bytes.hpp"
+
 
 // İmpove edilmiş ImGui DrawView sinfi
 @interface ImGuiDrawView : UIViewController <MTKViewDelegate>
