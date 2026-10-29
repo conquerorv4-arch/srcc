@@ -1,39 +1,73 @@
 <?php
-error_reporting(E_ALL & ~E_WARNING & ~E_NOTICE);
-ini_set('display_errors', 0);
-
 session_start();
 $admin_pass = "WEAR5555.2013DARKHXTE";
-$json_file = 'keys.json';
+$json_file = "keys.json";
 
-if (isset($_POST['password'])) {
-    if ($_POST['password'] === $admin_pass) {
-        $_SESSION['admin_logged'] = true;
-    } else {
-        $error = "Yanlış şifrə!";
-    }
+if (!file_exists($json_file)) {
+    file_put_contents($json_file, json_encode([]));
 }
 
-if (isset($_GET['logout'])) {
-    session_destroy();
+$keys_data = json_decode(file_get_contents($json_file), true);
+
+if (isset($_GET['action']) && $_GET['action'] == 'logout') {
+    unset($_SESSION['logged_in']);
     header("Location: admin.php");
     exit;
 }
 
-if (isset($_SESSION['admin_logged']) && $_SESSION['admin_logged'] === true) {
-    $keys = file_exists($json_file) ? json_decode(file_get_contents($json_file), true) : [];
-    if (!is_array($keys)) $keys = [];
+if (isset($_POST['login'])) {
+    if ($_POST['password'] === $admin_pass) {
+        $_SESSION['logged_in'] = true;
+        header("Location: admin.php");
+        exit;
+    } else {
+        $login_error = "Şifrə səhvdir!";
+    }
+}
 
-    // Yeni Key Yaratmaq
-    if (isset($_POST['generate'])) {
+if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
+    ?>
+    <!DOCTYPE html>
+    <html lang="az">
+    <head>
+        <meta charset="UTF-8">
+        <title>Admin Login - DARK IOS</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+            body { background: #000; color: #fff; font-family: monospace; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+            .login-box { background: #111; padding: 30px; border: 1px solid #333; border-radius: 8px; width: 300px; text-align: center; }
+            input { width: 100%; padding: 10px; margin: 10px 0; background: #222; border: 1px solid #444; color: #fff; border-radius: 4px; box-sizing: border-box; }
+            button { width: 100%; padding: 10px; background: #fff; color: #000; border: none; font-weight: bold; border-radius: 4px; cursor: pointer; }
+            button:hover { background: #ccc; }
+            .error { color: #ff4444; font-size: 14px; }
+        </style>
+    </head>
+    <body>
+        <div class="login-box">
+            <h2>DARK ADMIN</h2>
+            <?php if(isset($login_error)) echo "<p class='error'>$login_error</p>"; ?>
+            <form method="POST">
+                <input type="password" name="password" placeholder="Admin Şifrəsi" required>
+                <button type="submit" name="login">GİRİŞ</button>
+            </form>
+        </div>
+    </body>
+    </html>
+    <?php
+    exit;
+}
+
+// Əməliyyatlar (Key yaratma, silmə, bloklama, reset və s.)
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (isset($_POST['create_key'])) {
         $duration_type = $_POST['duration_type'];
         $note = htmlspecialchars($_POST['note']);
         $custom_key = trim($_POST['custom_key']);
         $max_devices = intval($_POST['max_devices']);
         if ($max_devices < 1) $max_devices = 1;
         
-        $expire_time = 0;
         $now = time();
+        $expire_time = $now + 86400;
         $prefix = "DARKOS-1D-";
         
         if ($duration_type == '1D') { 
@@ -53,91 +87,49 @@ if (isset($_SESSION['admin_logged']) && $_SESSION['admin_logged'] === true) {
             $prefix = "DARKOS-LIFETIME-"; 
         }
 
-        if (!empty($custom_key)) {
-            $new_key = htmlspecialchars($custom_key);
-        } else {
-            $random_str = strtoupper(substr(bin2hex(random_bytes(10)), 0, 17));
-            $new_key = $prefix . $random_str;
-        }
-        
-        $keys[$new_key] = [
-            'hwid' => [],
-            'max_devices' => $max_devices,
-            'status' => 'active',
-            'created' => $now, 
-            'expire' => $expire_time, 
-            'note' => $note
+        $random_part = strtoupper(bin2hex(random_bytes(4)));
+        $key = !empty($custom_key) ? $custom_key : $prefix . $random_part;
+
+        $keys_data[$key] = [
+            "note" => $note,
+            "expire" => $expire_time,
+            "max_devices" => $max_devices,
+            "devices" => [],
+            "status" => "active"
         ];
+
+        file_put_contents($json_file, json_encode($keys_data, JSON_PRETTY_PRINT));
+        header("Location: admin.php");
+        exit;
+    }
+
+    if (isset($_POST['action_key'])) {
+        $k = $_POST['key_id'];
+        $act = $_POST['sub_action'];
         
-        file_put_contents($json_file, json_encode($keys, JSON_PRETTY_PRINT));
-        header("Location: admin.php");
-        exit;
-    }
-    
-    // Key Silmək
-    if (isset($_GET['delete'])) {
-        $k_del = $_GET['delete'];
-        if (isset($keys[$k_del])) {
-            unset($keys[$k_del]);
-            file_put_contents($json_file, json_encode($keys, JSON_PRETTY_PRINT));
-        }
-        header("Location: admin.php");
-        exit;
-    }
-
-    // Bütün Keyləri Silmək
-    if (isset($_GET['delete_all'])) {
-        file_put_contents($json_file, json_encode([], JSON_PRETTY_PRINT));
-        header("Location: admin.php");
-        exit;
-    }
-
-    // HWID Sıfırlama
-    if (isset($_GET['reset_hwid'])) {
-        $k_target = $_GET['reset_hwid'];
-        if (isset($keys[$k_target])) {
-            $keys[$k_target]['hwid'] = [];
-            file_put_contents($json_file, json_encode($keys, JSON_PRETTY_PRINT));
-        }
-        header("Location: admin.php");
-        exit;
-    }
-
-    // Bloklama / Aktivləşdirmə Toggle
-    if (isset($_GET['toggle_status'])) {
-        $k_target = $_GET['toggle_status'];
-        if (isset($keys[$k_target])) {
-            $current_status = isset($keys[$k_target]['status']) ? $keys[$k_target]['status'] : 'active';
-            $keys[$k_target]['status'] = ($current_status === 'blocked') ? 'active' : 'blocked';
-            file_put_contents($json_file, json_encode($keys, JSON_PRETTY_PRINT));
-        }
-        header("Location: admin.php");
-        exit;
-    }
-
-    // Vaxt Uzatma
-    if (isset($_POST['extend_time'])) {
-        $k_target = $_POST['key_name'];
-        $add_days = intval($_POST['add_days']);
-        if (isset($keys[$k_target])) {
-            if ($keys[$k_target]['expire'] > 0) {
-                $current_expire = max($keys[$k_target]['expire'], time());
-                $keys[$k_target]['expire'] = $current_expire + ($add_days * 86400);
-                file_put_contents($json_file, json_encode($keys, JSON_PRETTY_PRINT));
+        if (isset($keys_data[$k])) {
+            if ($act == 'delete') {
+                unset($keys_data[$k]);
+            } elseif ($act == 'block') {
+                $keys_data[$k]['status'] = ($keys_data[$k]['status'] == 'banned') ? 'active' : 'banned';
+            } elseif ($act == 'reset_hwid') {
+                $keys_data[$k]['devices'] = [];
+            } elseif ($act == 'add_time') {
+                if ($keys_data[$k]['expire'] > 0) {
+                    $keys_data[$k]['expire'] += 86400; // 1 gün əlavə et
+                }
+            } elseif ($act == 'limit_inc') {
+                $keys_data[$k]['max_devices']++;
             }
+            file_put_contents($json_file, json_encode($keys_data, JSON_PRETTY_PRINT));
         }
         header("Location: admin.php");
         exit;
     }
 
-    // Cihaz Limitini Dəyişmək
-    if (isset($_POST['update_limit'])) {
-        $k_target = $_POST['key_name'];
-        $new_limit = intval($_POST['new_max_devices']);
-        if (isset($keys[$k_target]) && $new_limit > 0) {
-            $keys[$k_target]['max_devices'] = $new_limit;
-            file_put_contents($json_file, json_encode($keys, JSON_PRETTY_PRINT));
-        }
+    if (isset($_POST['delete_all'])) {
+        $keys_data = [];
+        file_put_contents($json_file, json_encode($keys_data, JSON_PRETTY_PRINT));
         header("Location: admin.php");
         exit;
     }
@@ -147,428 +139,77 @@ if (isset($_SESSION['admin_logged']) && $_SESSION['admin_logged'] === true) {
 <html lang="az">
 <head>
     <meta charset="UTF-8">
+    <title>Admin Panel - DARK IOS</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DARK IOS — Admin Panel</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        :root {
-            --bg: #0a0a0f; --card: #12121a; --card-hover: #1a1a24; --border: #23232f;
-            --text: #ffffff; --text-dim: #8b8b9e; --accent: #7c3aed; --accent-2: #a855f7;
-            --success: #10b981; --danger: #ef4444; --warning: #f59e0b;
-        }
-        body {
-            background: var(--bg);
-            background-image: radial-gradient(ellipse at top, rgba(124, 58, 237, 0.15), transparent 50%), radial-gradient(ellipse at bottom, rgba(168, 85, 247, 0.08), transparent 50%);
-            min-height: 100vh; color: var(--text); font-family: 'Inter', -apple-system, sans-serif; padding: 24px 16px; line-height: 1.5;
-        }
-        .container { max-width: 900px; margin: 0 auto; }
-        .header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin-bottom: 28px; position: relative; }
-        .brand { display: flex; align-items: center; gap: 12px; cursor: pointer; }
-        .logo {
-            width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, var(--accent), var(--accent-2));
-            display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; box-shadow: 0 8px 24px rgba(124, 58, 237, 0.4);
-            transition: transform 0.2s;
-        }
-        .logo:hover { transform: scale(1.05); }
-        .brand h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; }
-        .brand p { font-size: 12px; color: var(--text-dim); }
-        
-        .profile-menu {
-            position: absolute; top: 60px; left: 0; width: 260px; background: var(--card); border: 1px solid var(--border);
-            border-radius: 14px; padding: 12px; box-shadow: 0 15px 40px rgba(0,0,0,0.6); display: none; z-index: 100; animation: fadeIn 0.2s ease;
-        }
-        .profile-menu.active { display: block; }
-        .menu-item {
-            padding: 10px 14px; border-radius: 8px; font-size: 13px; color: var(--text); display: flex; align-items: center; gap: 10px; cursor: pointer; text-decoration: none; transition: background 0.2s;
-        }
-        .menu-item:hover { background: var(--card-hover); color: var(--accent-2); }
-        .menu-divider { height: 1px; background: var(--border); margin: 6px 0; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
-
-        .logout-btn {
-            padding: 10px 18px; border-radius: 10px; background: transparent; color: var(--text-dim); border: 1px solid var(--border);
-            font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer; text-decoration: none; transition: all 0.2s;
-        }
-        .logout-btn:hover { background: var(--card); color: var(--danger); border-color: var(--danger); }
-        
-        .login-card {
-            max-width: 420px; margin: 60px auto; background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 40px 32px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-        }
-        .login-card h2 { font-size: 24px; margin-bottom: 8px; letter-spacing: -0.02em; }
-        .login-card .subtitle { color: var(--text-dim); font-size: 14px; margin-bottom: 28px; }
-        
-        .form-group { margin-bottom: 16px; }
-        label { display: block; font-size: 13px; font-weight: 500; color: var(--text-dim); margin-bottom: 8px; }
-        input, select {
-            width: 100%; padding: 13px 16px; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 10px; font-family: 'JetBrains Mono', monospace; font-size: 13px; transition: all 0.2s;
-        }
-        input:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15); }
-        input::placeholder { color: #4a4a5a; }
-        
-        .btn {
-            width: 100%; padding: 13px 20px; background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: white; border: none; border-radius: 10px; font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; box-shadow: 0 8px 24px rgba(124, 58, 237, 0.3);
-        }
-        .btn:hover { transform: translateY(-1px); box-shadow: 0 12px 32px rgba(124, 58, 237, 0.45); }
-        
-        .error { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #fca5a5; padding: 12px 16px; border-radius: 10px; font-size: 13px; margin-bottom: 16px; }
-        
-        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 24px; }
-        .stat { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 18px; }
-        .stat-label { font-size: 12px; color: var(--text-dim); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
-        .stat-value { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; }
-        .stat-value.purple { color: var(--accent-2); }
-        .stat-value.green { color: var(--success); }
-        .stat-value.orange { color: var(--warning); }
-        
-        .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; margin-bottom: 24px; }
-        .card h3 { font-size: 16px; font-weight: 600; margin-bottom: 18px; display: flex; align-items: center; gap: 8px; font-family: 'Inter', sans-serif; }
-        .card h3::before { content: ''; width: 4px; height: 18px; background: linear-gradient(180deg, var(--accent), var(--accent-2)); border-radius: 2px; }
-        
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
-        @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
-        
-        .search-box { position: relative; margin-bottom: 16px; }
-        .search-box input { padding-left: 42px; font-family: 'Inter', sans-serif; }
-        .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-dim); font-size: 16px; }
-
-        .keys-section h3 { font-size: 16px; font-weight: 600; margin-bottom: 16px; font-family: 'Inter', sans-serif; }
-        .keys-list { display: flex; flex-direction: column; gap: 10px; }
-        
-        .key-item {
-            background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; transition: all 0.2s;
-        }
-        .key-item:hover { border-color: var(--accent); background: var(--card-hover); }
-        .key-info { flex: 1; min-width: 220px; }
-        
-        .key-code-row { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
-        .key-code { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; color: var(--accent-2); word-break: break-all; }
-        
-        .copy-btn {
-            background: rgba(124, 58, 237, 0.15); border: 1px solid rgba(124, 58, 237, 0.3); color: var(--accent-2); padding: 4px 8px; border-radius: 6px; font-size: 11px; cursor: pointer; font-weight: 600; transition: all 0.2s;
-        }
-        .copy-btn:hover { background: var(--accent); color: white; }
-        
-        .key-meta { display: flex; flex-wrap: wrap; gap: 8px; font-size: 12px; color: var(--text-dim); align-items: center; margin-top: 6px; }
-        
-        .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
-        .badge.success { background: rgba(16, 185, 129, 0.15); color: var(--success); }
-        .badge.warning { background: rgba(245, 158, 11, 0.15); color: var(--warning); }
-        .badge.danger  { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
-        .badge.info    { background: rgba(124, 58, 237, 0.15); color: var(--accent-2); }
-        
-        .action-btns { display: flex; gap: 6px; flex-wrap: wrap; }
-        .sm-btn {
-            padding: 6px 10px; border-radius: 6px; font-family: inherit; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.2s; text-decoration: none; border: 1px solid var(--border); background: var(--bg); color: var(--text);
-        }
-        .sm-btn.reset { border-color: rgba(245, 158, 11, 0.4); color: var(--warning); }
-        .sm-btn.reset:hover { background: var(--warning); color: #000; }
-        .sm-btn.block { border-color: rgba(239, 68, 68, 0.4); color: var(--danger); }
-        .sm-btn.block:hover { background: var(--danger); color: white; }
-        .sm-btn.delete { border-color: rgba(239, 68, 68, 0.6); background: rgba(239, 68, 68, 0.1); color: var(--danger); }
-        .sm-btn.delete:hover { background: var(--danger); color: white; }
-        .sm-btn.extend { border-color: rgba(16, 185, 129, 0.4); color: var(--success); }
-        .sm-btn.extend:hover { background: var(--success); color: white; }
-        .sm-btn.limit { border-color: rgba(168, 85, 247, 0.4); color: var(--accent-2); }
-        .sm-btn.limit:hover { background: var(--accent); color: white; }
-
-        .empty { text-align: center; padding: 40px 20px; color: var(--text-dim); font-size: 14px; background: var(--card); border: 1px dashed var(--border); border-radius: 12px; }
-        
-        .modal {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center; padding: 16px;
-        }
-        .modal.active { display: flex; }
-        .modal-content { background: var(--card); border: 1px solid var(--border); border-radius: 16px; width: 100%; max-width: 400px; padding: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.8); }
+        body { background: #0b0c10; color: #c5c6c7; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 20px; }
+        .container { max-width: 800px; margin: auto; }
+        h2, h3 { color: #fff; }
+        .card { background: #1f2833; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #28313d; }
+        input, select { width: 100%; padding: 12px; margin: 8px 0; background: #0b0c10; border: 1px solid #45a29e; color: #fff; border-radius: 6px; box-sizing: border-box; }
+        button { padding: 12px 20px; background: #66fcf1; color: #0b0c10; border: none; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%; }
+        button:hover { background: #45a29e; }
+        .key-item { background: #0b0c10; padding: 15px; border-radius: 6px; margin-bottom: 10px; border: 1px solid #28313d; }
+        .actions form { display: inline-block; margin-right: 5px; margin-top: 5px; }
+        .actions button { padding: 6px 12px; font-size: 12px; width: auto; }
+        .btn-danger { background: #ff4444; color: #fff; }
+        .btn-warning { background: #ffbb33; color: #000; }
+        .btn-success { background: #00C851; color: #fff; }
+        .flex { display: flex; gap: 10px; }
     </style>
 </head>
 <body>
 <div class="container">
-
-<?php if (!isset($_SESSION['admin_logged']) || $_SESSION['admin_logged'] !== true): ?>
-    <div class="login-card">
-        <div style="text-align:center; margin-bottom:24px;">
-            <div class="logo" style="margin: 0 auto 16px;">D</div>
-            <h2>Admin Girişi</h2>
-            <p class="subtitle">DARK IOS idarəetmə paneli</p>
-        </div>
-        <?php if (isset($error)) echo "<div class='error'>⚠️ $error</div>"; ?>
-        <form method="POST">
-            <div class="form-group">
-                <label>Admin Şifrəsi</label>
-                <input type="password" name="password" placeholder="••••••••••••" required autofocus>
-            </div>
-            <button type="submit" class="btn">Daxil ol</button>
-        </form>
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h2>DARK IOS Admin Panel</h2>
+        <a href="admin.php?action=logout" style="color: #ff4444; text-decoration: none;">Çıxış</a>
     </div>
-<?php else: ?>
-    
-    <?php 
-    $keys = file_exists($json_file) ? json_decode(file_get_contents($json_file), true) : [];
-    if (!is_array($keys)) $keys = [];
-    $total = count($keys);
-    $unused = 0; $active = 0; $expired = 0;
-    foreach ($keys as $v) {
-        $status = isset($v['status']) ? $v['status'] : 'active';
-        $expire = isset($v['expire']) ? $v['expire'] : 0;
-        
-        if ($status !== 'blocked') {
-            if ($expire > 0 && $expire < time()) $expired++;
-            else $active++;
-        }
-        $hwid_arr = isset($v['hwid']) ? $v['hwid'] : [];
-        if (empty($hwid_arr)) $unused++;
-    }
-    
-    $default_rand = strtoupper(substr(bin2hex(random_bytes(10)), 0, 17));
-    $default_key_val = "DARKOS-1D-" . $default_rand;
-    ?>
-    
-    <div class="header">
-        <div class="brand" onclick="toggleProfileMenu(event)">
-            <div class="logo">D</div>
-            <div>
-                <h1>DARK IOS</h1>
-                <p>Admin Panel</p>
-            </div>
-        </div>
 
-        <div class="profile-menu" id="profileMenu">
-            <div style="font-size:11px; color:var(--text-dim); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.05em;">Sistem Menyu</div>
-            <a href="admin.php?delete_all=true" class="menu-item" onclick="return confirm('DİQQƏT: Bütün keylər silinəcək! Əminsinizmi?')">🗑️ Bütün Keyləri Sil</a>
-            <div class="menu-divider"></div>
-            <a href="admin.php?logout=true" class="menu-item" style="color: var(--danger);">🚪 Hesabdan Çıxış</a>
-        </div>
-
-        <a href="admin.php?logout=true" class="logout-btn">Çıxış →</a>
-    </div>
-    
-    <div class="stats">
-        <div class="stat">
-            <div class="stat-label">Cəmi Key</div>
-            <div class="stat-value"><?= $total ?></div>
-        </div>
-        <div class="stat">
-            <div class="stat-label">Boş (İşlənməyib)</div>
-            <div class="stat-value purple"><?= $unused ?></div>
-        </div>
-        <div class="stat">
-            <div class="stat-label">Aktiv</div>
-            <div class="stat-value green"><?= $active ?></div>
-        </div>
-        <div class="stat">
-            <div class="stat-label">Vaxtı bitib</div>
-            <div class="stat-value orange"><?= $expired ?></div>
-        </div>
-    </div>
-    
     <div class="card">
         <h3>Yeni Key Yarat</h3>
         <form method="POST">
-            <div class="form-row">
-                <div class="form-group" style="margin-bottom:0;">
-                    <label>Qeyd (İstifadəçi adı)</label>
-                    <input type="text" name="note" placeholder="məsələn: dark_player_01" style="font-family: 'Inter', sans-serif;">
-                </div>
-                <div class="form-group" style="margin-bottom:0;">
-                    <label>Maksimum Cihaz Sayı</label>
-                    <input type="number" name="max_devices" value="1" min="1" max="10" style="font-family: 'Inter', sans-serif;">
-                </div>
+            <input type="text" name="note" placeholder="Qeyd (İstifadəçi adı və ya məlumat)">
+            <div class="flex">
+                <input type="number" name="max_devices" value="1" min="1" placeholder="Maks Cihaz">
+                <select name="duration_type">
+                    <option value="1D">1 Günlük (1D)</option>
+                    <option value="7D">7 Günlük (7D)</option>
+                    <option value="30D">30 Günlük (30D)</option>
+                    <option value="LIFETIME">Sınırsız (LIFETIME)</option>
+                </select>
             </div>
-
-            <div class="form-row" style="margin-top: 12px;">
-                <div class="form-group" style="margin-bottom:0;">
-                    <label>Müddət</label>
-                    <select name="duration_type" id="durationSelect" onchange="updateKeyFormat()" style="font-family: 'Inter', sans-serif;">
-                        <option value="1D">1 Günlük (1D)</option>
-                        <option value="7D">7 Günlük (7D - Həftəlik)</option>
-                        <option value="30D">30 Günlük (30D)</option>
-                        <option value="LIFETIME">Sınırsız (LIFETIME)</option>
-                    </select>
-                </div>
-                <div class="form-group" style="margin-bottom:0;">
-                    <label>Key Kodu</label>
-                    <input type="text" name="custom_key" id="customKeyInput" value="<?= $default_key_val ?>">
-                </div>
-            </div>
-            <button type="submit" name="generate" class="btn" style="margin-top:16px;">+ Key Yarat</button>
+            <input type="text" name="custom_key" placeholder="Özəl Key (Boş buraxarsanız avtomatik yaranacaq)">
+            <button type="submit" name="create_key">+ Key Yarat</button>
         </form>
     </div>
 
-    <div class="search-box">
-        <span class="search-icon">🔍</span>
-        <input type="text" id="searchInput" placeholder="Key və ya qeyd üzrə axtar..." onkeyup="searchKeys()">
-    </div>
-    
-    <div class="keys-section">
-        <h3>Mövcud Keylər (<span id="keyCount"><?= $total ?></span>)</h3>
-        <div class="keys-list" id="keysListContainer">
-            <?php if (!empty($keys)): ?>
-                <?php foreach ($keys as $k => $v): 
-                    $expire = isset($v['expire']) ? $v['expire'] : 0;
-                    $note = isset($v['note']) ? $v['note'] : '';
-                    $hwid = isset($v['hwid']) ? $v['hwid'] : [];
-                    if (!is_array($hwid)) $hwid = !empty($hwid) ? [$hwid] : [];
-                    $max_dev = isset($v['max_devices']) ? $v['max_devices'] : 1;
-                    $status = isset($v['status']) ? $v['status'] : 'active';
-
-                    if ($status === 'blocked') {
-                        $time_label = "Bloklanıb";
-                        $badge_class = 'danger';
-                    } elseif ($expire == 0) {
-                        $time_label = "Sınırsız";
-                        $badge_class = 'success';
-                    } else {
-                        $left = $expire - time();
-                        if ($left > 0) {
-                            $d = floor($left / 86400);
-                            $h = floor(($left % 86400) / 3600);
-                            $time_label = "Qalır: {$d}g {$h}s";
-                            $badge_class = $d < 1 ? 'warning' : 'success';
-                        } else {
-                            $time_label = "Vaxtı bitib";
-                            $badge_class = 'danger';
-                        }
-                    }
-                    $hwid_count = count($hwid);
-                ?>
-                <div class="key-item" data-search="<?= strtolower($k . ' ' . $note) ?>">
-                    <div class="key-info">
-                        <div class="key-code-row">
-                            <div class="key-code" id="code_<?= md5($k) ?>"><?= htmlspecialchars($k) ?></div>
-                            <button class="copy-btn" onclick="copyKey('code_<?= md5($k) ?>')">Kopyala</button>
-                        </div>
-                        <div class="key-meta">
-                            <?php if (!empty($note)): ?>
-                                <span>📝 <?= htmlspecialchars($note) ?></span>
-                            <?php endif; ?>
-                            <span class="badge <?= $badge_class ?>"><?= $time_label ?></span>
-                            <span class="badge info">📱 Cihaz: <?= $hwid_count ?>/<?= $max_dev ?></span>
-                            <?php if ($status === 'blocked'): ?>
-                                <span class="badge danger">⛔ Bloklu</span>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-                    <div class="action-btns">
-                        <a href="admin.php?reset_hwid=<?= urlencode($k) ?>" onclick="return confirm('Bu keyin cihaz bağlamaları (HWID) sıfırlansın?')" class="sm-btn reset" title="Cihazları Sıfırla">Reset</a>
-                        <a href="admin.php?toggle_status=<?= urlencode($k) ?>" class="sm-btn block"><?= ($status === 'blocked') ? 'Aç' : 'Blokla' ?></a>
-                        <button onclick="openLimitModal('<?= htmlspecialchars($k) ?>', <?= $max_dev ?>)" class="sm-btn limit">Limit</button>
-                        <?php if ($expire > 0): ?>
-                            <button onclick="openExtendModal('<?= htmlspecialchars($k) ?>')" class="sm-btn extend">+ Gün</button>
-                        <?php endif; ?>
-                        <a href="admin.php?delete=<?= urlencode($k) ?>" onclick="return confirm('Bu key silinsin?')" class="sm-btn delete">Sil</a>
-                    </div>
-                </div>
-                <?php endforeach; ?>
-            <?php else: ?>
-                <div class="empty" id="emptySearch">📭 Hələ heç bir key yaradılmayıb</div>
-            <?php endif; ?>
-        </div>
-    </div>
-
-    <!-- Vaxt Uzatma Modalı -->
-    <div class="modal" id="extendModal">
-        <div class="modal-content">
-            <h3 style="margin-bottom: 14px;">Vaxt Uzat</h3>
-            <form method="POST">
-                <input type="hidden" name="key_name" id="modalKeyName">
-                <div class="form-group">
-                    <label>Əlavə olunacaq gün sayı:</label>
-                    <input type="number" name="add_days" value="7" min="1" required style="font-family:'Inter', sans-serif;">
-                </div>
-                <div style="display: flex; gap: 10px;">
-                    <button type="submit" name="extend_time" class="btn">Təsdiq Et</button>
-                    <button type="button" class="btn" style="background:var(--border); color:var(--text);" onclick="closeExtendModal()">Ləğv Et</button>
-                </div>
+    <div class="card">
+        <h3>Mövcud Keylər (<?= count($keys_data) ?>)</h3>
+        <?php if(count($keys_data) > 0): ?>
+            <form method="POST" onsubmit="return confirm('Bütün keyləri silmək istədiyinizə əminsiniz?');">
+                <button type="submit" name="delete_all" class="btn-danger" style="margin-bottom: 15px;">Bütün Keyləri Sil</button>
             </form>
-        </div>
-    </div>
-
-    <!-- Cihaz Limiti Dəyişmə Modalı -->
-    <div class="modal" id="limitModal">
-        <div class="modal-content">
-            <h3 style="margin-bottom: 14px;">Cihaz Limitini Dəyiş</h3>
-            <form method="POST">
-                <input type="hidden" name="key_name" id="limitKeyName">
-                <div class="form-group">
-                    <label>Yeni maksimum cihaz sayı:</label>
-                    <input type="number" name="new_max_devices" id="limitInputVal" min="1" max="10" required style="font-family:'Inter', sans-serif;">
+        <?php endif; ?>
+        
+        <?php foreach($keys_data as $k => $v): ?>
+            <div class="key-item">
+                <strong><?= htmlspecialchars($k) ?></strong> 
+                <?php if(!empty($v['note'])): ?> <span style="color:#66fcf1;">(<?= htmlspecialchars($v['note']) ?>)</span> <?php endif; ?><br>
+                <small>
+                    Status: <b><?= $v['status'] ?></b> | 
+                    Müddət: <?= ($v['expire'] == 0) ? "Sınırsız" : ceil(($v['expire'] - time())/86400) . " gün qaldı" ?> | 
+                    Cihaz: <?= count($v['devices']) ?>/<?= $v['max_devices'] ?>
+                </small>
+                <div class="actions">
+                    <form method="POST"><input type="hidden" name="key_id" value="<?= $k ?>"><input type="hidden" name="sub_action" value="reset_hwid"><button type="submit" name="action_key" class="btn-warning">HWID Sıfırla</button></form>
+                    <form method="POST"><input type="hidden" name="key_id" value="<?= $k ?>"><input type="hidden" name="sub_action" value="block"><button type="submit" name="action_key" class="btn-danger"><?= ($v['status']=='banned')?'Aç':'Blokla' ?></button></form>
+                    <form method="POST"><input type="hidden" name="key_id" value="<?= $k ?>"><input type="hidden" name="sub_action" value="add_time"><button type="submit" name="action_key" class="btn-success">+1 Gün</button></form>
+                    <form method="POST"><input type="hidden" name="key_id" value="<?= $k ?>"><input type="hidden" name="sub_action" value="limit_inc"><button type="submit" name="action_key" class="btn-warning">+Cihaz</button></form>
+                    <form method="POST"><input type="hidden" name="key_id" value="<?= $k ?>"><input type="hidden" name="sub_action" value="delete"><button type="submit" name="action_key" class="btn-danger">Sil</button></form>
                 </div>
-                <div style="display: flex; gap: 10px;">
-                    <button type="submit" name="update_limit" class="btn">Yenilə</button>
-                    <button type="button" class="btn" style="background:var(--border); color:var(--text);" onclick="closeLimitModal()">Ləğv Et</button>
-                </div>
-            </form>
-        </div>
+            </div>
+        <?php endforeach; ?>
     </div>
-
-    <script>
-    function toggleProfileMenu(event) {
-        event.stopPropagation();
-        const menu = document.getElementById('profileMenu');
-        menu.classList.toggle('active');
-    }
-    window.onclick = function() {
-        document.getElementById('profileMenu').classList.remove('active');
-    }
-
-    function copyKey(elementId) {
-        const text = document.getElementById(elementId).innerText;
-        navigator.clipboard.writeText(text).then(() => {
-            alert('Key kopyalandı: ' + text);
-        });
-    }
-
-    function searchKeys() {
-        let input = document.getElementById('searchInput').value.toLowerCase();
-        let items = document.getElementsByClassName('key-item');
-        let count = 0;
-        for (let i = 0; i < items.length; i++) {
-            let data = items[i].getAttribute('data-search');
-            if (data.includes(input)) {
-                items[i].style.display = 'flex';
-                count++;
-            } else {
-                items[i].style.display = 'none';
-            }
-        }
-        document.getElementById('keyCount').innerText = count;
-    }
-
-    function openExtendModal(keyName) {
-        document.getElementById('modalKeyName').value = keyName;
-        document.getElementById('extendModal').classList.add('active');
-    }
-    function closeExtendModal() {
-        document.getElementById('extendModal').classList.remove('active');
-    }
-
-    function openLimitModal(keyName, currentLimit) {
-        document.getElementById('limitKeyName').value = keyName;
-        document.getElementById('limitInputVal').value = currentLimit;
-        document.getElementById('limitModal').classList.add('active');
-    }
-    function closeLimitModal() {
-        document.getElementById('limitModal').classList.remove('active');
-    }
-
-    function generateRandomString() {
-        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-        let result = '';
-        for (let i = 0; i < 17; i++) {
-            result += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-        return result;
-    }
-
-    function updateKeyFormat() {
-        const select = document.getElementById('durationSelect');
-        const input = document.getElementById('customKeyInput');
-        const val = select.value;
-        const randomPart = generateRandomString();
-        input.value = `DARKOS-${val}-${randomPart}`;
-    }
-    </script>
-<?php endif; ?>
 </div>
 </body>
 </html>
