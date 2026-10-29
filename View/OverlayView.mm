@@ -13,10 +13,10 @@
 #include <vector>
 #include <string>
 #include <map>
-#include "PUBG/core/Vector/Tools.h"
-#include "PUBG/core/Vector/Vector3.h"
-#include "PUBG/core/Vector/Vector2.h"
-#include "PUBG/core/Vector/monoString.h"
+#include "Tools.h"
+#include "Vector3.h"
+#include "Vector2.h"
+#include "monoString.h"
 #include "SDK.hpp"
 #include "Settings.h"
 #include "gui/mywings/gui.hpp"
