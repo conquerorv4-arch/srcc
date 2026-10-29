@@ -10,6 +10,15 @@ if (!file_exists($json_file)) {
 $keys_data = json_decode(file_get_contents($json_file), true);
 if (!is_array($keys_data)) $keys_data = [];
 
+// Köhnə JSON strukturunu təhlükəsiz formata salırıq
+foreach ($keys_data as $k => $v) {
+    if (!isset($v['status'])) $keys_data[$k]['status'] = 'active';
+    if (!isset($v['expire'])) $keys_data[$k]['expire'] = 0;
+    if (!isset($v['max_devices'])) $keys_data[$k]['max_devices'] = 1;
+    if (!isset($v['devices']) || !is_array($v['devices'])) $keys_data[$k]['devices'] = [];
+    if (!isset($v['note'])) $keys_data[$k]['note'] = '';
+}
+
 // --- Logout ---
 if (isset($_GET['action']) && $_GET['action'] == 'logout') {
     unset($_SESSION['logged_in']);
@@ -155,6 +164,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
+    // Ayarlar menyusundan gələn "Bütün keyləri sil" əməliyyatı
     if (isset($_POST['delete_all'])) {
         $keys_data = [];
         file_put_contents($json_file, json_encode($keys_data, JSON_PRETTY_PRINT));
@@ -210,12 +220,31 @@ function key_time_left($v) {
         }
         .header h1{font-size:20px; margin:0; letter-spacing:.5px;}
         .header h1 span{color:var(--accent);}
-        .logout-btn{
-            color:var(--danger); text-decoration:none; font-size:14px;
-            padding:8px 16px; border:1px solid rgba(239,68,68,.3);
-            border-radius:8px; transition:all .15s;
+        .header-right{display:flex; gap:10px; align-items:center;}
+        
+        .settings-btn, .logout-btn{
+            color:var(--text-dim); text-decoration:none; font-size:14px;
+            padding:8px 16px; border:1px solid var(--border);
+            border-radius:8px; transition:all .15s; cursor:pointer;
+            background:var(--surface); font-family:inherit;
         }
+        .settings-btn:hover{border-color:var(--accent); color:var(--accent);}
+        .logout-btn{color:var(--danger); border-color:rgba(239,68,68,.3);}
         .logout-btn:hover{background:rgba(239,68,68,.1);}
+
+        /* Settings Panel */
+        .settings-panel{
+            display:none; background:var(--surface); border:1px solid var(--border);
+            border-radius:14px; padding:22px; margin-bottom:20px;
+            border-left:4px solid var(--accent);
+            animation: slideDown 0.2s ease-out;
+        }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .settings-panel h3{margin:0 0 15px; font-size:16px; color:var(--text);}
+        .settings-panel hr{border:0; border-top:1px solid var(--border); margin:20px 0;}
 
         /* Cards */
         .card{
@@ -308,17 +337,12 @@ function key_time_left($v) {
         .danger-zone{
             border:1px solid rgba(239,68,68,.3);
             background:rgba(239,68,68,.05);
+            padding:16px; border-radius:10px;
         }
-        .danger-zone h2{color:var(--danger);}
-        .danger-zone p{
-            color:var(--text-dim); font-size:13px; margin:0 0 14px;
-        }
-        .btn-danger-solid{
-            background:var(--danger) !important;
-        }
-        .btn-danger-solid:hover{
-            background:#dc2626 !important;
-        }
+        .danger-zone h4{color:var(--danger); margin:0 0 8px; font-size:14px;}
+        .danger-zone p{color:var(--text-dim); font-size:13px; margin:0 0 14px;}
+        .btn-danger-solid{background:var(--danger) !important;}
+        .btn-danger-solid:hover{background:#dc2626 !important;}
 
         .text-danger{color:var(--danger);}
         .text-dim{color:var(--text-dim);}
@@ -335,7 +359,29 @@ function key_time_left($v) {
 
     <div class="header">
         <h1><span>DARK</span> IOS Admin</h1>
-        <a href="admin.php?action=logout" class="logout-btn">Çıxış →</a>
+        <div class="header-right">
+            <button type="button" class="settings-btn" onclick="toggleSettings()">⚙️ Ayarlar</button>
+            <a href="admin.php?action=logout" class="logout-btn">Çıxış →</a>
+        </div>
+    </div>
+
+    <!-- Ayarlar Paneli (Gizli Başlayır) -->
+    <div id="settingsPanel" class="settings-panel">
+        <h3>⚙️ Sistem Ayarları</h3>
+        
+        <?php if (count($keys_data) > 0): ?>
+        <div class="danger-zone">
+            <h4>⚠ Təhlükəli Zona</h4>
+            <p>Bu əməliyyat geri qaytarıla bilməz. Bütün keylər birdəfəlik silinəcək.</p>
+            <form method="POST" onsubmit="return confirm('BÜTÜN keylər silinəcək. Əminsiniz?');">
+                <button type="submit" name="delete_all" class="btn-danger-solid" style="width:100%;">Bütün Keyləri Sil</button>
+            </form>
+        </div>
+        <?php else: ?>
+            <p style="color:var(--text-dim); font-size:14px;">Hazırda silinəcək heç bir key yoxdur.</p>
+        <?php endif; ?>
+        
+        <!-- Gələcəkdə bura başqa ayarlar əlavə edilə bilər -->
     </div>
 
     <!-- Yeni key -->
@@ -377,7 +423,6 @@ function key_time_left($v) {
             <?php foreach($keys_data as $k => $v): ?>
                 <?php
                     $is_banned = ($v['status'] == 'banned');
-                    $is_expired = ($v['expire'] > 0 && $v['expire'] < time());
                 ?>
                 <div class="key-item">
                     <div class="key-head">
@@ -405,17 +450,18 @@ function key_time_left($v) {
         <?php endif; ?>
     </div>
 
-    <!-- Danger zone -->
-    <?php if (count($keys_data) > 0): ?>
-    <div class="card danger-zone">
-        <h2>⚠ Təhlükəli Zona</h2>
-        <p>Bu əməliyyat geri qaytarıla bilməz. Bütün keylər birdəfəlik silinəcək.</p>
-        <form method="POST" onsubmit="return confirm('BÜTÜN keylər silinəcək. Əminsiniz?');">
-            <button type="submit" name="delete_all" class="btn-danger-solid">Bütün Keyləri Sil</button>
-        </form>
-    </div>
-    <?php endif; ?>
-
 </div>
+
+<script>
+    function toggleSettings() {
+        var panel = document.getElementById('settingsPanel');
+        if (panel.style.display === 'block') {
+            panel.style.display = 'none';
+        } else {
+            panel.style.display = 'block';
+            panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
+</script>
 </body>
 </html>
