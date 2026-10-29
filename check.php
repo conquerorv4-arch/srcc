@@ -1,33 +1,43 @@
 <?php
-// Məlumat bazası və ya sadə JSON fayl ilə idarəetmə
-$key = $_GET['key'] ?? '';
-$device_id = $_GET['hwid'] ?? '';
+$keys_file = 'keys.json';
+$key = isset($_GET['key']) ? trim($_GET['key']) : '';
+$hwid = isset($_GET['hwid']) ? trim($_GET['hwid']) : '';
 
-if (empty($key) || empty($device_id)) {
-    echo json_encode(["status" => "error", "message" => "Eksik məlumat"]);
+if (empty($key) || empty($hwid)) {
+    echo json_encode(["status" => "error", "message" => "Eksik"]);
     exit;
 }
 
-// Burada öz databazandan key-i yoxlayırsan
-// Tutaq ki, key bazadan oxundu:
-$stored_key = "Aa11"; 
-$bound_device = ""; // Əvvəl bağlanmış cihazın UDID/HWID-i
+$keys = file_exists($keys_file) ? json_decode(file_get_contents($keys_file), true) : [];
 
-if ($key !== $stored_key) {
-    echo json_encode(["status" => "error", "message" => "Yanlış Key!"]);
+if (!isset($keys[$key])) {
+    echo json_encode(["status" => "error", "message" => "Yanlis"]);
     exit;
 }
 
-// Əgər key hələ heç bir cihaza bağlanmayıbsa, bu cihazı bağlayırıq
-if (empty($bound_device)) {
-    $bound_device = $device_id; // İlk girən cihaz bağlanır
-    // Bazaya $device_id-ni qeyd et
-    echo json_encode(["status" => "success", "message" => "Key uğurla aktivləşdirildi!"]);
-} else if ($bound_device === $device_id) {
-    // Eyni cihazdırsa girişə icazə ver
-    echo json_encode(["status" => "success", "message" => "Xoş gəldiniz!"]);
+$data = $keys[$key];
+if (!is_array($data)) {
+    $data = ['expires' => (int)$data, 'hwid' => [], 'max_devices' => 1];
+}
+
+if (time() > $data['expires']) {
+    echo json_encode(["status" => "error", "message" => "Vaxti bitib"]);
+    exit;
+}
+
+if (in_array($hwid, $data['hwid'])) {
+    echo json_encode(["status" => "success", "message" => "OK"]);
+    exit;
+}
+
+if (count($data['hwid']) < $data['max_devices']) {
+    $data['hwid'][] = $hwid;
+    $keys[$key] = $data;
+    file_put_contents($keys_file, json_encode($keys, JSON_PRETTY_PRINT));
+    echo json_encode(["status" => "success", "message" => "OK"]);
+    exit;
 } else {
-    // Başqa cihazdırsa rədd et
-    echo json_encode(["status" => "error", "message" => "Bu key başqa cihaza bağlıdır!"]);
+    echo json_encode(["status" => "error", "message" => "Limit dolub"]);
+    exit;
 }
 ?>
