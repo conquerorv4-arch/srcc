@@ -14,9 +14,9 @@
 #include <string>
 #include <map>
 #include "Tools.h"
-#include "PUBG/core/Vector/Vector3.h"
-#include "PUBG/core/Vector/Vector2.h"
-#include "PUBG/core/Vector/monoString.h"
+#include "Vector3.h"
+#include "Vector2.h"
+#include "monoString.h"
 #include "SDK.hpp"
 #include "Settings.h"
 #include "gui/mywings/gui.hpp"
