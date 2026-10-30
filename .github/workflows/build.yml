@@ -1,3 +1,19 @@
+name: Build Tweak
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
       - name: Extract SDK
         run: |
           echo "=== Zip faylının tərkibi ==="
@@ -8,7 +24,6 @@
           mkdir -p SDK
           unzip -q SDK.zip -d SDK
           
-          # Əgər zip-in içində qovluq varsa, düzgün yerə gətirək
           if [ -d "SDK/SDK" ]; then
             mv SDK/SDK/* SDK/
             rmdir SDK/SDK
@@ -16,3 +31,17 @@
           
           echo "=== SDK qovluğunun son tərkibi ==="
           ls -la SDK/
+
+      - name: Setup Theos Manually
+        run: |
+          brew install ldid make dpkg
+          git clone --recursive https://github.com/theos/theos.git ~/theos
+          sudo mkdir -p /opt/theos
+          sudo git clone --recursive https://github.com/theos/theos.git /opt/theos
+          git clone https://github.com/theos/sdks.git ~/theos-sdks
+          cp -r ~/theos-sdks/*.sdk /opt/theos/sdks/ 2>/dev/null || true
+
+      - name: Make Package
+        run: |
+          export THEOS=/opt/theos
+          make package
