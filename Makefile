@@ -25,3 +25,4 @@ M7MD_FILES = Tweak.mm Menu.mm View/OverlayView.mm imgui_impl_metal.mm $(wildcard
 include $(THEOS_MAKE_PATH)/tweak.mk
 M7MD_CFLAGS += -I$(THEOS_PROJECT_DIR)/SDK
 M7MD_CFLAGS += -I$(THEOS_PROJECT_DIR)/SDK
+M7MD_CFLAGS += -I$(THEOS_PROJECT_DIR)/SDK
