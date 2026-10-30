@@ -18,12 +18,10 @@
 #include "Vector2.h"
 #include "monoString.h"
 //
-#include "Settings.h"
 #include "SDK/SHANKS_PUBGM_Basic.hpp"
 #include "SDK/SHANKS_PUBGM_CoreUObject_classes.hpp"
-#include "SDK/SHANKS_PUBGM_BP_STRUCT_ReturnLoadingConfig_type_structs.hpp"
+#include "SDK/SHANKS_PUBGM_BP_STRUCT_ReturnL...
 using namespace SDK;
-
 // İmpove edilmiş ImGui DrawView sinfi
 @interface ImGuiDrawView : UIViewController <MTKViewDelegate> {
     MTKView *mtkView;
