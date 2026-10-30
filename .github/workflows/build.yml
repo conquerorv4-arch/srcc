@@ -16,11 +16,9 @@ jobs:
     - name: Setup Theos
       run: |
         git clone --recursive https://github.com/theos/theos.git $HOME/theos
-        # Əgər SDK lazımdırsa, burda SDK-nı theos/sdks qovluğuna kopyalaya bilərsən
+        echo "THEOS=$HOME/theos" >> $GITHUB_ENV
 
     - name: Compile Tweak
-      env:
-        THEOS: ${{ github.workspace }}/theos # və ya $HOME/theos
       run: |
         make package
 
