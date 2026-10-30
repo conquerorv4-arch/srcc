@@ -16,23 +16,25 @@ jobs:
 
       - name: Extract SDK
         run: |
-          echo "=== Arxiv tam açılır ==="
           rm -rf SDK temp_sdk
           mkdir -p temp_sdk
           unzip -q SDK.zip -d temp_sdk
-
           if [ -d "temp_sdk/SDK" ]; then
             cp -r temp_sdk/SDK SDK
           else
             mkdir -p SDK
             cp -r temp_sdk/* SDK/
           fi
-
           rm -rf temp_sdk
-          echo "=== SDK qovluğunun strukturu ==="
+
+          echo "===== SDK KÖK ====="
           ls -la SDK/
-          echo "=== SHANKS_PUBGM_Basic.hpp yeri ==="
-          find SDK -name "SHANKS_PUBGM_Basic.hpp" || echo "TAPILMADI!"
+          echo "===== ARANAN HEADER ====="
+          find . -name "SHANKS_PUBGM_Basic.hpp" 2>/dev/null || echo "TAPILMADI"
+          echo "===== TÜM .hpp DOSYALARI ====="
+          find SDK -name "*.hpp" | head -50
+          echo "===== SDK KLASÖRLERİ ====="
+          find SDK -maxdepth 3 -type d | head -50
 
       - name: Setup Theos Manually
         run: |
@@ -45,18 +47,4 @@ jobs:
       - name: Make Package
         run: |
           export THEOS=/opt/theos
-          # --- ƏSAS DÜZƏLİŞ: include yollarını əlavə et ---
-          export CPPFLAGS="-I$(pwd) -I$(pwd)/SDK -I$(pwd)/SDK/SDK"
-          export CFLAGS="$CPPFLAGS"
-          export CXXFLAGS="$CPPFLAGS"
-          export OBJCFLAGS="$CPPFLAGS"
-          export OBJCXXFLAGS="$CPPFLAGS"
-          
-          # Theos-a da bildir
-          export THEOS_CFLAGS="$CPPFLAGS"
-          
-          make package \
-            ADDITIONAL_CFLAGS="$CPPFLAGS" \
-            ADDITIONAL_CPPFLAGS="$CPPFLAGS" \
-            ADDITIONAL_OBJCFLAGS="$CPPFLAGS" \
-            ADDITIONAL_OBJCXXFLAGS="$CPPFLAGS"
+          make package
