@@ -20,28 +20,43 @@ jobs:
           rm -rf SDK temp_sdk
           mkdir -p temp_sdk
           unzip -q SDK.zip -d temp_sdk
-          
+
           if [ -d "temp_sdk/SDK" ]; then
             cp -r temp_sdk/SDK SDK
           else
             mkdir -p SDK
             cp -r temp_sdk/* SDK/
           fi
-          
+
           rm -rf temp_sdk
           echo "=== SDK qovluğunun strukturu ==="
           ls -la SDK/
+          echo "=== SHANKS_PUBGM_Basic.hpp yeri ==="
+          find SDK -name "SHANKS_PUBGM_Basic.hpp" || echo "TAPILMADI!"
 
       - name: Setup Theos Manually
         run: |
           brew install ldid make dpkg
-          git clone --recursive https://github.com/theos/theos.git ~/theos
-          sudo mkdir -p /opt/theos
           sudo git clone --recursive https://github.com/theos/theos.git /opt/theos
           git clone https://github.com/theos/sdks.git ~/theos-sdks
+          mkdir -p /opt/theos/sdks
           cp -r ~/theos-sdks/*.sdk /opt/theos/sdks/ 2>/dev/null || true
 
       - name: Make Package
         run: |
           export THEOS=/opt/theos
-          make package
+          # --- ƏSAS DÜZƏLİŞ: include yollarını əlavə et ---
+          export CPPFLAGS="-I$(pwd) -I$(pwd)/SDK -I$(pwd)/SDK/SDK"
+          export CFLAGS="$CPPFLAGS"
+          export CXXFLAGS="$CPPFLAGS"
+          export OBJCFLAGS="$CPPFLAGS"
+          export OBJCXXFLAGS="$CPPFLAGS"
+          
+          # Theos-a da bildir
+          export THEOS_CFLAGS="$CPPFLAGS"
+          
+          make package \
+            ADDITIONAL_CFLAGS="$CPPFLAGS" \
+            ADDITIONAL_CPPFLAGS="$CPPFLAGS" \
+            ADDITIONAL_OBJCFLAGS="$CPPFLAGS" \
+            ADDITIONAL_OBJCXXFLAGS="$CPPFLAGS"
