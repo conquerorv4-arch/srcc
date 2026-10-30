@@ -20,8 +20,23 @@ jobs:
           unzip SDK.zip -d SDK
         fi
 
-    - name: Setup Theos
-      uses: unforgiven-dev/install-theos@master
+    - name: Setup Theos Manually
+      run: |
+        # Theos üçün lazım olan ləvazimatları quraşdıraq (brew vasitəsilə ldid, xz və s.)
+        brew install ldid make dpkg
+        
+        # Theos-u qovluğa klonlayaq
+        git clone --recursive https://github.com/theos/theos.git ~/theos
+        
+        # Theos SDK-larını əlavə edək (iPhoneOS SDK)
+        sudo mkdir -p /opt/theos
+        sudo git clone --recursive https://github.com/theos/theos.git /opt/theos
+        
+        # İOS SDK-nı yükləyək (Theos SDK-ları üçün)
+        git clone https://github.com/theos/sdks.git ~/theos-sdks
+        cp -r ~/theos-sdks/*.sdk /opt/theos/sdks/ 2>/dev/null || true
 
     - name: Make Package
-      run: make package
+      run: |
+        export THEOS=/opt/theos
+        make package
