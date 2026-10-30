@@ -19,12 +19,12 @@
 #include "monoString.h"
 
 // ============================================================
-// UNREAL ENGINE SDK - DOĞRU INCLUDE SIRALAMASI (ƏVVƏL CORE, SONRA BASIC)
+// UNREAL ENGINE SDK - QƏTİ DÜZGÜN SIRALAMA (ƏVVƏL BASIC, SONRA CORE)
 // ============================================================
-#include "SDK/SHANKS_PUBGM_CoreUObject_structs.hpp"
-#include "SDK/SHANKS_PUBGM_CoreUObject_classes.hpp"
 #include "SDK/SHANKS_PUBGM_Basic_structs.hpp"
 #include "SDK/SHANKS_PUBGM_Basic_classes.hpp"
+#include "SDK/SHANKS_PUBGM_CoreUObject_structs.hpp"
+#include "SDK/SHANKS_PUBGM_CoreUObject_classes.hpp"
 #include "SDK/SHANKS_PUBGM_Engine_structs.hpp"
 #include "SDK/SHANKS_PUBGM_Engine_classes.hpp"
 #include "SDK/SHANKS_PUBGM_GameplayAbilities_structs.hpp"
