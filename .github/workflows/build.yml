@@ -1,65 +1,15 @@
-name: Build Tweak
-
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-
-jobs:
-  build:
-    runs-on: macos-latest
-
-    steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v3
-
     - name: Extract SDK
       run: |
-        echo "=== Repozitoriyadakı fayllar ==="
-        ls -la
+        echo "=== Zip faylı açılır ==="
+        rm -rf SDK
+        mkdir -p SDK
+        unzip -q SDK.zip -d SDK
         
-        rm -rf SDK SDK_extracted temp_sdk
-        
-        if [ -f "SDK.zip" ]; then
-          echo "SDK.zip tapıldı, açılır..."
-          mkdir -p SDK_extracted
-          unzip -q SDK.zip -d SDK_extracted
-          
-          # Zip-in iç quruluşunu yoxlayıb SDK qovluğunu düzgün yerə qoyuruq
-          if [ -d "SDK_extracted/SDK" ]; then
-            mv SDK_extracted/SDK SDK
-          elif ls SDK_extracted/*.hpp 1> /dev/null 2>&1; then
-            mkdir -p SDK
-            mv SDK_extracted/*.hpp SDK/
-          else
-            # Əgər birbaşa qovluq içindədirsə
-            FIRST_DIR=$(find SDK_extracted -mindepth 1 -maxdepth 1 -type d | head -n 1)
-            if [ -n "$FIRST_DIR" ]; then
-              mv "$FIRST_DIR" SDK
-            else
-              mkdir -p SDK
-              mv SDK_extracted/* SDK/
-            fi
-          fi
-          rm -rf SDK_extracted
-        else
-          echo "DİQQƏT: SDK.zip tapılmadı!"
+        # Əgər zip-in içindən yenə SDK adlı alt qovluq çıxıbsa, strukturu düzəldirik
+        if [ -d "SDK/SDK" ]; then
+          mv SDK/SDK/* SDK/
+          rmdir SDK/SDK
         fi
         
-        echo "=== SDK qovluğunun içi ==="
-        ls -la SDK/ || echo "SDK qovluğu yoxdur!"
-
-    - name: Setup Theos Manually
-      run: |
-        brew install ldid make dpkg
-        git clone --recursive https://github.com/theos/theos.git ~/theos
-        sudo mkdir -p /opt/theos
-        sudo git clone --recursive https://github.com/theos/theos.git /opt/theos
-        git clone https://github.com/theos/sdks.git ~/theos-sdks
-        cp -r ~/theos-sdks/*.sdk /opt/theos/sdks/ 2>/dev/null || true
-
-    - name: Make Package
-      run: |
-        export THEOS=/opt/theos
-        make package
+        echo "=== SDK qovluğunun tərkibi ==="
+        ls -la SDK/
