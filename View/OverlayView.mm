@@ -18,9 +18,9 @@
 #include "Vector2.h"
 #include "monoString.h"
 //
-#include "SDK/SHANKS_PUBGM_Basic.hpp"
-#include "SDK/SHANKS_PUBGM_CoreUObject_classes.hpp"
-#include "SDK/SHANKS_PUBGM_Engine_classes.hpp" // Və ya digər əsas SDK faylı
+#include "SDK/SHANKS_PUBGM_Basic_classes.hpp"
+#include "SDK/SHANKS_PUBGM_Basic_structs.hpp"
+#include "SDK/SHANKS_PUBGM_Basic_parameters.hpp"
 using namespace SDK;
 // İmpove edilmiş ImGui DrawView sinfi
 @interface ImGuiDrawView : UIViewController <MTKViewDelegate> {
