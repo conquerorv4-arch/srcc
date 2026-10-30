@@ -8,27 +8,24 @@ on:
 jobs:
   build:
     runs-on: macos-latest
-    
+
     steps:
     - name: Checkout Code
       uses: actions/checkout@v4
 
-    - name: Set up Theos
+    - name: Setup Theos
       run: |
-        git clone --recursive https://github.com/theos/theos.git ~/theos
+        git clone --recursive https://github.com/theos/theos.git $HOME/theos
+        # Əgər SDK lazımdırsa, burda SDK-nı theos/sdks qovluğuna kopyalaya bilərsən
 
-    - name: Install ldid
-      run: |
-        brew install ldid
-
-    - name: Build with Make
-      run: |
-        make clean && make THEOS=~/theos
+    - name: Compile Tweak
       env:
-        THEOS: /Users/runner/theos
+        THEOS: ${{ github.workspace }}/theos # və ya $HOME/theos
+      run: |
+        make package
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: PubgOverlay
-        path: .theos/obj/**/*.dylib
+        name: compiled-tweak
+        path: packages/*.deb
