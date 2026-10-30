@@ -16,33 +16,39 @@ jobs:
 
     - name: Extract SDK
       run: |
-        echo "=== Directory contents before extraction ==="
+        echo "=== Repozitoriyadakı fayllar ==="
         ls -la
         
+        rm -rf SDK SDK_extracted temp_sdk
+        
         if [ -f "SDK.zip" ]; then
-          rm -rf temp_sdk SDK
-          mkdir -p temp_sdk
-          unzip -q SDK.zip -d temp_sdk
+          echo "SDK.zip tapıldı, açılır..."
+          mkdir -p SDK_extracted
+          unzip -q SDK.zip -d SDK_extracted
           
-          if ls temp_sdk/*.hpp 1> /dev/null 2>&1; then
+          # Zip-in iç quruluşunu yoxlayıb SDK qovluğunu düzgün yerə qoyuruq
+          if [ -d "SDK_extracted/SDK" ]; then
+            mv SDK_extracted/SDK SDK
+          elif ls SDK_extracted/*.hpp 1> /dev/null 2>&1; then
             mkdir -p SDK
-            cp temp_sdk/* SDK/
-          elif [ -d "temp_sdk/SDK" ]; then
-            cp -r temp_sdk/SDK SDK
+            mv SDK_extracted/*.hpp SDK/
           else
-            FIRST_DIR=$(find temp_sdk -mindepth 1 -maxdepth 1 -type d | head -n 1)
+            # Əgər birbaşa qovluq içindədirsə
+            FIRST_DIR=$(find SDK_extracted -mindepth 1 -maxdepth 1 -type d | head -n 1)
             if [ -n "$FIRST_DIR" ]; then
-              cp -r "$FIRST_DIR" SDK
+              mv "$FIRST_DIR" SDK
             else
               mkdir -p SDK
-              cp -r temp_sdk/* SDK/
+              mv SDK_extracted/* SDK/
             fi
           fi
-          rm -rf temp_sdk
+          rm -rf SDK_extracted
+        else
+          echo "DİQQƏT: SDK.zip tapılmadı!"
         fi
         
-        echo "=== Directory contents of SDK/ ==="
-        ls -la SDK/
+        echo "=== SDK qovluğunun içi ==="
+        ls -la SDK/ || echo "SDK qovluğu yoxdur!"
 
     - name: Setup Theos Manually
       run: |
