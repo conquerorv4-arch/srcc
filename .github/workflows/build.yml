@@ -16,23 +16,24 @@ jobs:
 
     - name: Extract SDK
       run: |
+        ls -la
         if [ -f "SDK.zip" ]; then
-          unzip SDK.zip -d SDK
+          mkdir -p temp_sdk
+          unzip SDK.zip -d temp_sdk
+          mkdir -p SDK
+          cp -r temp_sdk/* SDK/ || true
+          if [ -d "temp_sdk/SDK" ]; then
+            cp -r temp_sdk/SDK/* SDK/ || true
+          fi
         fi
+        ls -la SDK/
 
     - name: Setup Theos Manually
       run: |
-        # Theos üçün lazım olan ləvazimatları quraşdıraq (brew vasitəsilə ldid, xz və s.)
         brew install ldid make dpkg
-        
-        # Theos-u qovluğa klonlayaq
         git clone --recursive https://github.com/theos/theos.git ~/theos
-        
-        # Theos SDK-larını əlavə edək (iPhoneOS SDK)
         sudo mkdir -p /opt/theos
         sudo git clone --recursive https://github.com/theos/theos.git /opt/theos
-        
-        # İOS SDK-nı yükləyək (Theos SDK-ları üçün)
         git clone https://github.com/theos/sdks.git ~/theos-sdks
         cp -r ~/theos-sdks/*.sdk /opt/theos/sdks/ 2>/dev/null || true
 
